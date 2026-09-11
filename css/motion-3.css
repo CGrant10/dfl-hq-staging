@@ -53,6 +53,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Staging is an explicit motion preview. The app's global accessibility
+     rule wins with !important, so opt this selected preview back in here. */
+  :root[data-motion-preview="full"] .m3-reveal.m3-in[data-m3-side="left"],
+  :root[data-motion-preview="full"] .m3-reveal.m3-in[data-m3-side="right"] {
+    animation-duration: 480ms !important;
+    animation-delay: var(--m3-delay, 0ms) !important;
+    animation-iteration-count: 1 !important;
+  }
+  :root[data-motion-preview="full"] .td-stamp.is-pass {
+    animation-duration: 720ms !important;
+    animation-delay: 120ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  :root[data-motion-preview="full"] .tabbar::before {
+    transition-duration: 280ms, 280ms, 120ms !important;
+  }
   :root:not([data-motion-preview="full"]) .page-in,
   :root:not([data-motion-preview="full"]) .m3-reveal,
   :root:not([data-motion-preview="full"]) .m3-reveal.m3-in,
