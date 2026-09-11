@@ -1,7 +1,7 @@
 /* DFL motion direction 3: quick alternating impact with a short spring settle. */
 :root {
-  --m3-spring: cubic-bezier(.16, 1.28, .3, 1);
-  --m3-step: 65ms;
+  --m3-spring: cubic-bezier(.18, 1.08, .3, 1);
+  --m3-step: 42ms;
 }
 
 @keyframes m3-screen {
@@ -9,13 +9,13 @@
   to { opacity: 1; }
 }
 @keyframes m3-hit-left {
-  0% { opacity: 0; transform: translate3d(-52px, 0, 0) scale(.97) skewX(2deg); }
-  70% { opacity: 1; transform: translate3d(4px, 0, 0) scale(1.006) skewX(-.2deg); }
+  0% { opacity: 0; transform: translate3d(-28px, 0, 0) scale(.985) skewX(.6deg); }
+  72% { opacity: 1; transform: translate3d(1px, 0, 0) scale(1.001); }
   100% { opacity: 1; transform: none; }
 }
 @keyframes m3-hit-right {
-  0% { opacity: 0; transform: translate3d(52px, 0, 0) scale(.97) skewX(-2deg); }
-  70% { opacity: 1; transform: translate3d(-4px, 0, 0) scale(1.006) skewX(.2deg); }
+  0% { opacity: 0; transform: translate3d(28px, 0, 0) scale(.985) skewX(-.6deg); }
+  72% { opacity: 1; transform: translate3d(-1px, 0, 0) scale(1.001); }
   100% { opacity: 1; transform: none; }
 }
 @keyframes m3-rule {
@@ -32,10 +32,10 @@
 .page-in > #home-wrap { animation: none; }
 .m3-reveal { opacity: 0; will-change: transform, opacity; }
 .m3-reveal.m3-in[data-m3-side="left"] {
-  animation: m3-hit-left 620ms var(--m3-spring) var(--m3-delay, 0ms) both;
+  animation: m3-hit-left 480ms var(--m3-spring) var(--m3-delay, 0ms) both;
 }
 .m3-reveal.m3-in[data-m3-side="right"] {
-  animation: m3-hit-right 620ms var(--m3-spring) var(--m3-delay, 0ms) both;
+  animation: m3-hit-right 480ms var(--m3-spring) var(--m3-delay, 0ms) both;
 }
 
 .page-in :is(.bx-progress, .meter > i, .td-balance-track > i, .progress > i) {

@@ -32,7 +32,7 @@
       if (element.classList.contains("m3-reveal")) return;
       element.classList.add("m3-reveal");
       element.dataset.m3Side = index % 2 ? "right" : "left";
-      element.style.setProperty("--m3-delay", `${Math.min(index, 6) * 65}ms`);
+      element.style.setProperty("--m3-delay", `${Math.min(index, 5) * 42}ms`);
       observer.observe(element);
     });
   };
@@ -43,7 +43,7 @@
     prepare(document);
     let index = 0;
     for (const element of waiting) {
-      element.style.setProperty("--m3-delay", `${Math.min(index++, 6) * 65}ms`);
+      element.style.setProperty("--m3-delay", `${Math.min(index++, 5) * 42}ms`);
       reveal(element);
     }
   };
@@ -58,10 +58,10 @@
       const onSplashEnd = event => {
         if (event.target !== splash || event.animationName !== "dfl-splash-out") return;
         splash.removeEventListener("animationend", onSplashEnd);
-        launch();
+        setTimeout(launch, 70);
       };
       splash.addEventListener("animationend", onSplashEnd);
-      setTimeout(launch, 2400);
+      setTimeout(launch, 2500);
     }
   };
 
