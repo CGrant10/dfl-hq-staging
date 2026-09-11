@@ -1,0 +1,82 @@
+/* DFL motion direction 3: quick alternating impact with a short spring settle. */
+:root {
+  --m3-spring: cubic-bezier(.18, 1.08, .3, 1);
+  --m3-step: 42ms;
+}
+
+@keyframes m3-screen {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes m3-hit-left {
+  0% { opacity: 0; transform: translate3d(-28px, 0, 0) scale(.985) skewX(.6deg); }
+  72% { opacity: 1; transform: translate3d(1px, 0, 0) scale(1.001); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes m3-hit-right {
+  0% { opacity: 0; transform: translate3d(28px, 0, 0) scale(.985) skewX(-.6deg); }
+  72% { opacity: 1; transform: translate3d(-1px, 0, 0) scale(1.001); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes m3-rule {
+  from { opacity: .4; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+@keyframes m3-savage-call {
+  0%, 100% { filter: none; }
+  24% { background: color-mix(in srgb, var(--danger) 22%, var(--bg-2)); box-shadow: inset 4px 0 0 var(--danger); }
+  58% { background: color-mix(in srgb, var(--accent-2) 19%, var(--bg-2)); box-shadow: inset 4px 0 0 var(--accent-2); }
+}
+
+.page-in { animation: m3-screen 120ms ease-out both; }
+.page-in > #home-wrap { animation: none; }
+.m3-reveal { opacity: 0; will-change: transform, opacity; }
+.m3-reveal.m3-in[data-m3-side="left"] {
+  animation: m3-hit-left 480ms var(--m3-spring) var(--m3-delay, 0ms) both;
+}
+.m3-reveal.m3-in[data-m3-side="right"] {
+  animation: m3-hit-right 480ms var(--m3-spring) var(--m3-delay, 0ms) both;
+}
+
+.page-in :is(.bx-progress, .meter > i, .td-balance-track > i, .progress > i) {
+  transform-origin: left center;
+  animation: m3-rule 420ms 80ms ease-out both;
+}
+.td-stamp.is-pass { animation: m3-savage-call 720ms 120ms both; }
+
+.tabbar::before {
+  transition: left 280ms var(--m3-spring), width 280ms var(--m3-spring), opacity 120ms ease-out;
+}
+:is(.btn, .card, .option, .quicknav a, .memberbtn, .chip, .tabbar a, .tabmore):active {
+  transform: scale(.965);
+  transition-duration: 90ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Staging is an explicit motion preview. The app's global accessibility
+     rule wins with !important, so opt this selected preview back in here. */
+  :root[data-motion-preview="full"] .m3-reveal.m3-in[data-m3-side="left"],
+  :root[data-motion-preview="full"] .m3-reveal.m3-in[data-m3-side="right"] {
+    animation-duration: 480ms !important;
+    animation-delay: var(--m3-delay, 0ms) !important;
+    animation-iteration-count: 1 !important;
+  }
+  :root[data-motion-preview="full"] .td-stamp.is-pass {
+    animation-duration: 720ms !important;
+    animation-delay: 120ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  :root[data-motion-preview="full"] .tabbar::before {
+    transition-duration: 280ms, 280ms, 120ms !important;
+  }
+  :root:not([data-motion-preview="full"]) .page-in,
+  :root:not([data-motion-preview="full"]) .m3-reveal,
+  :root:not([data-motion-preview="full"]) .m3-reveal.m3-in,
+  :root:not([data-motion-preview="full"]) .page-in :is(.bx-progress, .meter > i, .td-balance-track > i, .progress > i),
+  :root:not([data-motion-preview="full"]) .td-stamp.is-pass {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  :root:not([data-motion-preview="full"]) .tabbar::before { transition: opacity 120ms ease-out; }
+}
