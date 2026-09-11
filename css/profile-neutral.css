@@ -1,0 +1,75 @@
+/* Permanent neutral chrome + profile career polish.
+   Theme colors belong to content accents and active indicators, not every shell glyph. */
+
+/* Bottom navigation and More sheet: palette-aware ink. */
+.tabbar :is(a,.tabmore),
+.tabbar :is(a,.tabmore):hover { color:var(--muted) !important; }
+.tabbar :is(a,.tabmore).on { color:var(--accent) !important; }
+.tabbar :is(a,.tabmore) svg { color:var(--muted) !important; }
+.tabbar :is(a,.tabmore).on svg { color:var(--accent) !important; }
+.tabbar :is(a,.tabmore) svg [stroke] { stroke:currentColor !important; }
+.tabbar :is(a,.tabmore) svg [fill]:not([fill="none"]) { fill:currentColor !important; }
+#more svg,.sheet-card svg { color:var(--muted) !important; }
+#more svg [stroke],.sheet-card svg [stroke] { stroke:currentColor !important; }
+#more svg [fill]:not([fill="none"]),.sheet-card svg [fill]:not([fill="none"]) { fill:currentColor !important; }
+.tabbar :is(a,.tabmore).on::before,
+.tabbar :is(a,.tabmore).on::after { background:var(--accent-sweep) !important; }
+
+/* DFL is league chrome, not member branding. */
+.brand-word,.brand-text .brand-word,.brand-text .brand-word span {
+  background:none !important;
+  -webkit-background-clip:border-box !important;
+  background-clip:border-box !important;
+  -webkit-text-fill-color:#fff !important;
+  color:#fff !important;
+}
+
+/* Career: one quiet surface, not six pale boxes inside another box. */
+#profile-wrap .card-title-row .card-title {
+  background:none !important;
+  -webkit-background-clip:border-box !important;
+  background-clip:border-box !important;
+  -webkit-text-fill-color:var(--text) !important;
+  color:var(--text) !important;
+}
+#profile-wrap .statgrid.is-3up {
+  gap:0;
+  overflow:hidden;
+  border:1px solid var(--line-soft);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--bg-2) 92%,var(--bg) 8%);
+}
+#profile-wrap .statgrid.is-3up .stat {
+  margin:0;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  padding:13px 8px;
+}
+#profile-wrap .statgrid.is-3up .stat:nth-child(n+4) { border-top:1px solid var(--line-soft) !important; }
+#profile-wrap .statgrid.is-3up .stat:not(:nth-child(3n+1)) { border-left:1px solid var(--line-soft) !important; }
+#profile-wrap .statgrid.is-3up .stat-v,
+#profile-wrap .statgrid.is-3up .stat-v.good,
+#profile-wrap .statgrid.is-3up .stat-v.warn {
+  background:none !important;
+  -webkit-background-clip:border-box !important;
+  background-clip:border-box !important;
+  -webkit-text-fill-color:var(--text) !important;
+  color:var(--text) !important;
+}
+#profile-wrap .statgrid.is-3up .stat-l { color:var(--muted) !important; }
+
+/* Championships are hardware. Keep them shiny gold regardless of member palette. */
+.profile-head .ph-record .is-gold { color:#e7c66a !important; }
+.profile-head .ph-record .is-gold svg {
+  color:#e7c66a !important;
+  filter:drop-shadow(0 0 4px rgba(231,198,106,.28));
+}
+.profile-head .ph-record .is-gold svg [stroke] { stroke:url(#dfl-gold-grad) !important; }
+.profile-head .ph-record .is-gold svg [fill]:not([fill="none"]) { fill:url(#dfl-gold-grad) !important; }
+
+@media(min-width:720px){
+  #profile-wrap .statgrid.is-3up .stat:nth-child(n+4){border-top:0 !important}
+  #profile-wrap .statgrid.is-3up .stat:not(:first-child){border-left:1px solid var(--line-soft) !important}
+}

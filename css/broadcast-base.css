@@ -1,0 +1,1451 @@
+/* =====================================================================
+   DFL HQ - Broadcast Mode
+   ---------------------------------------------------------------------
+   The one part of the app that is NOT mobile-first. This is a 16:9 stage
+   for an OBS Browser Source at 1920x1080, read from across a room on
+   somebody else's Twitch stream, so the type is enormous by app standards.
+
+   Kept in its own file because it shares almost nothing with the phone UI
+   and style.css is long enough already.
+
+   `body.broadcasting` strips the app chrome - header, tab bar, page padding
+   - so the stage is the entire frame with no browser furniture for OBS to
+   capture. Nothing here leaks into the phone: every rule is scoped either
+   to that body class or to a bc- prefix.
+
+   Sizes are in vw deliberately. OBS captures at a fixed canvas size, so
+   scaling with the viewport means one layout holds at 1280x720 and
+   1920x1080 alike without a media query per resolution.
+   ===================================================================== */
+
+body.broadcasting {
+  padding: 0;
+  overflow: hidden;
+  background: #06090d;
+}
+body.broadcasting .topbar,
+body.broadcasting .tabbar,
+body.broadcasting .install,
+body.broadcasting #update { display: none !important; }
+body.broadcasting .view { max-width: none; margin: 0; padding: 0; }
+
+/* =====================================================================
+   THE STAGE IS A DARK SURFACE IN EVERY MODE, SO IT CARRIES DARK-MODE INK
+   ---------------------------------------------------------------------
+   .bc-stage hardcodes its own background - a near-black broadcast
+   composition - but every rule inside it asks for --text, --muted and
+   --accent, and those INVERT with the member's palette. In light mode that
+   put #11161d text and a #B8001B accent onto #06090d: the race read as a
+   black rectangle and the admin bar's buttons were unreadable.
+
+   Rather than rewrite twenty rules, the palette is re-declared for this
+   subtree. Custom properties cascade, so every `var(--text)` below keeps
+   working and simply resolves to the value that belongs on this surface.
+
+   LIGHT MODE ONLY. Dark and the club palettes are already dark surfaces
+   with light ink, and pinning them here would throw away a member's club
+   colours on the one screen built to show them off.
+
+   .bc-bar is listed separately because it is position:fixed to the
+   viewport, not a child of the stage - see the comment above it.
+   ===================================================================== */
+[data-mode="light"] .bc-stage,
+[data-mode="light"] .bc-bar {
+  --bg: #0d1117;
+  --bg-2: #131a24;
+  --bg-3: #1b2432;
+  --line: #222b3a;
+  --line-soft: #1a222e;
+  --text: #e8edf5;
+  --body-text: #cdd6e2;
+  --muted: #8b98ab;
+  --chalk: #f5f7fa;
+  --accent: #E67582;
+  --accent-2: #7098E6;
+  --milestone: #d6b254;
+}
+
+.bc-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(47,191,95,.10), transparent 60%),
+    linear-gradient(180deg, #0b1017, #06090d);
+  color: var(--text);
+}
+
+/* -------------------------------- header ------------------------------ */
+
+.bc-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 2vw;
+  padding: 1.6vw 2.4vw 1.2vw;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: rgba(6,9,13,.55);
+}
+.bc-brand { display: grid; }
+.bc-brand-mark {
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-size: 2.5vw;
+  font-weight: 700;
+  letter-spacing: .1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.bc-brand-mark span { color: var(--accent-2); text-shadow: 0 0 1.4vw rgba(47,191,95,.5); }
+.bc-brand-sub {
+  font-size: .82vw;
+  font-weight: 800;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bc-title { text-align: center; min-width: 0; }
+.bc-event {
+  margin: 0;
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-size: 2.9vw;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+.bc-sub {
+  margin: .2vw 0 0;
+  font-size: 1vw;
+  color: var(--muted);
+  letter-spacing: .05em;
+}
+
+.bc-clock {
+  min-width: 7vw;
+  text-align: right;
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-size: 3.4vw;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------- track + board --------------------------- */
+
+.bc-body {
+  display: grid;
+  grid-template-columns: 1fr 20vw;
+  gap: 1.6vw;
+  padding: 1.4vw 2.4vw;
+  min-height: 0;
+}
+/* Hiding the leaderboard hands its space to the track. */
+.bc-body.no-board { grid-template-columns: 1fr; }
+
+.bc-track {
+  position: relative;
+  display: grid;
+  align-content: stretch;
+  min-height: 0;
+  border-radius: 1vw;
+  border: 1px solid rgba(255,255,255,.07);
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,.022) 0 6vh, transparent 6vh 12vh),
+    linear-gradient(180deg, #0d141d, #0a0f16);
+  overflow: hidden;
+}
+.bc-finish {
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: .5vw;
+  background: repeating-linear-gradient(180deg, #f5f7fa 0 1.1vh, #11161f 1.1vh 2.2vh);
+  box-shadow: -1vw 0 2.4vw rgba(0,0,0,.5);
+  z-index: 1;
+}
+
+.bc-lane {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px dashed rgba(255,255,255,.05);
+  padding: 0 .6vw;
+  min-height: 0;
+}
+.bc-lane:last-child { border-bottom: 0; }
+
+.bc-lane-name {
+  position: absolute;
+  left: 1vw;
+  display: flex;
+  align-items: center;
+  gap: .7vw;
+  font-size: 1.15vw;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: rgba(232,237,245,.34);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.bc-lane-name b {
+  display: inline-grid;
+  place-items: center;
+  width: 1.9vw; height: 1.9vw;
+  border-radius: 50%;
+  background: var(--racer);
+  color: #06240f;
+  font-size: 1vw;
+  font-weight: 800;
+}
+
+/* The rail spans the lane; the sprite sits at its left edge. See the note
+   on .runner in style.css - translateX percentages are of the element being
+   translated, so the mover has to be lane-width. */
+.bc-runner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 3.4vw;
+  pointer-events: none;
+  will-change: transform;
+}
+.bc-runner-art {
+  width: 5vw;
+  height: 3.4vw;
+  filter: drop-shadow(0 .3vw .5vw rgba(0,0,0,.6));
+}
+.bc-runner .racer-art, .bc-runner .racer-img {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+}
+
+/* ------------------------------ standings ---------------------------- */
+
+.bc-board {
+  border-radius: 1vw;
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(11,16,23,.8);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.bc-board-head {
+  padding: .9vw 1.1vw;
+  font-size: .85vw;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.bc-board-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  align-content: stretch;
+}
+.bc-board-list li {
+  display: grid;
+  grid-template-columns: 2.4vw 1fr;
+  align-items: center;
+  gap: .6vw;
+  padding: 0 1.1vw;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: 1.25vw;
+  font-weight: 600;
+  min-width: 0;
+}
+.bc-board-list li:last-child { border-bottom: 0; }
+.bc-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bc-pos {
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-size: 1.5vw;
+  font-weight: 700;
+  color: var(--racer, var(--muted));
+  font-variant-numeric: tabular-nums;
+}
+.bc-board-list li.leader { background: rgba(47,191,95,.09); }
+.bc-board-list li.leader .bc-who { color: var(--accent); font-weight: 700; }
+
+/* A position change flashes once: noticeable at a glance on stream, over in
+   a third of a second, never distracting. */
+.bc-move { animation: bcMove .34s ease both; }
+@keyframes bcMove {
+  from { background: rgba(255,255,255,.10); }
+  to   { background: transparent; }
+}
+
+/* ------------------------- countdown + winner ------------------------ */
+
+.bc-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(5,8,12,.62);
+  z-index: 10;
+}
+.bc-count {
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-size: 18vw;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  text-shadow: 0 0 4vw rgba(0,0,0,.7);
+  animation: bcCount .7s cubic-bezier(.2,.7,.3,1) both;
+}
+.bc-count.go { color: var(--accent); font-size: 14vw; letter-spacing: .05em; }
+@keyframes bcCount {
+  from { opacity: 0; transform: scale(1.45); }
+  55%  { opacity: 1; transform: scale(1); }
+  to   { opacity: .95; transform: scale(1); }
+}
+
+.bc-winner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 12;
+  background:
+    radial-gradient(60% 60% at 50% 45%, rgba(47,191,95,.20), transparent 70%),
+    rgba(5,8,12,.80);
+  animation: bcFade .45s ease both;
+}
+@keyframes bcFade { from { opacity: 0; } to { opacity: 1; } }
+
+.bc-winner-inner { display: grid; justify-items: center; gap: .4vw; }
+.bc-winner-kicker {
+  font-size: 1.1vw;
+  font-weight: 800;
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+.bc-winner-name {
+  font-family: "Rajdhani", system-ui, sans-serif;
+  font-size: 9vw;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  animation: bcWinnerName .6s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes bcWinnerName {
+  from { opacity: 0; transform: translate3d(0, 2vw, 0) scale(.94); }
+  to   { opacity: 1; transform: none; }
+}
+.bc-winner-event {
+  font-size: 1.2vw;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* -------------------------------- footer ----------------------------- */
+
+.bc-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .9vw 2.4vw 1.1vw;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-size: .95vw;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bc-foot-right { color: var(--accent-2); }
+
+/* ---------------------- the commissioner panel ----------------------- */
+/* This part IS in the phone app, so it uses ordinary app sizing. */
+
+.bc-url { display: flex; gap: 8px; align-items: center; }
+.bc-url input { font-size: 12px; font-family: ui-monospace, monospace; }
+.bc-controls, .bc-toggles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+}
+.bc-toggles label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.bc-toggles input { width: auto; }
+.bc-toggles .pill { margin-left: auto; }
+
+/* ------------------------- the control bar --------------------------- */
+
+/*
+  Behaves like a video player's chrome: it appears on pointer movement and
+  disappears after a few idle seconds. OBS never moves a pointer, so the
+  capture never sees it - which is why the broadcast can carry controls at
+  all without them ending up on the stream.
+
+  Fixed to the viewport rather than the stage so it stays reachable in
+  fullscreen, and it is the only thing on this page with a pointer cursor.
+*/
+.bc-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 2.2vh;
+  transform: translate(-50%, 130%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: .6vw;
+  padding: .7vw .9vw;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(9,13,19,.92);
+  box-shadow: 0 1vw 3vw rgba(0,0,0,.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .22s ease, opacity .22s ease;
+}
+.bc-bar.on {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* A disabled control has to LOOK unavailable, or "Start is off while paused"
+   is a rule the screen keeps to itself and the user just thinks it is broken. */
+.bc-bar .bc-btn:disabled{opacity:.34;cursor:not-allowed;filter:grayscale(.6)}
+.bc-btn {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  border-radius: 999px;
+  padding: .5vw 1.1vw;
+  font-family: inherit;
+  font-size: 1vw;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bc-btn:hover { background: rgba(47,191,95,.18); border-color: var(--accent-dim); }
+.bc-bar-hint {
+  font-size: .8vw;
+  color: var(--muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding-left: .4vw;
+}
+.bc-motion-setting {
+  display:flex;
+  align-items:center;
+  gap:.35vw;
+  padding:0 .35vw;
+  color:var(--muted);
+  font-size:clamp(10px,.72vw,13px);
+  font-weight:700;
+  white-space:nowrap;
+}
+.bc-motion-setting input { width:auto; margin:0; accent-color:var(--accent); }
+
+/*
+  On a phone the broadcast is not the point, but somebody WILL open it there
+  and must be able to get out. Below tablet width the bar uses real pixels so
+  the buttons stay tappable, and it stays put instead of hiding.
+*/
+@media (max-width: 900px) {
+  .bc-bar {
+    bottom: 12px;
+    gap: 6px;
+    padding: 8px 10px;
+    flex-wrap: wrap;
+    max-width: calc(100vw - 24px);
+    justify-content: center;
+    transform: translate(-50%, 0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .bc-btn { font-size: 12px; padding: 7px 11px; }
+  .bc-motion-setting { gap:5px; padding:3px 6px; font-size:11px; }
+  .bc-bar-hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-bar { transition: none; }
+}
+
+/* =====================================================================
+   THE RACERS, ALIVE - ON THE BROADCAST STAGE TOO.
+
+   The event page got all of this and the OBS stage got none of it, which
+   is the screen people actually watch. Same class names as the event
+   page so the two cannot drift, but every amplitude is in vw because
+   this stage scales to 1920x1080 rather than to a phone - a 5px hop that
+   reads correctly in the app is invisible here.
+
+   Animations sit on the ART, never on .bc-runner: that element carries
+   the translate3d that IS the race.
+   ===================================================================== */
+
+.bc-runner-art { position: relative; transform-origin: 50% 90%; }
+
+
+/*
+  SPECIFICITY, AND THIS IS WHY NOTHING APPEARED TO WORK.
+
+  The base and run-cycle rules used to be written as
+
+    .runner .runner-art                   (2 classes)
+    .track.is-running .runner .runner-art (4 classes)
+
+  and every state rule as
+
+    .runner.is-surge .runner-art          (3 classes)
+
+  Four beats three, so the run cycle WON over surge, stumble, jump, duel
+  and the winner's hop - permanently. The classes were being applied
+  correctly the whole time; their animations simply never got to play,
+  which is indistinguishable from "the feature does not work".
+
+  The fix is to stop over-qualifying the base rules rather than to pile
+  more classes onto the state rules: the art element only ever lives
+  inside a runner, so naming the runner in those selectors bought nothing
+  and cost the cascade. Base is now 1 class, running is 3, and each state
+  is 3 and declared later - so a state wins on source order.
+
+  If you add a state, keep it at three classes or fewer.
+*/
+.bc-runner-art { animation: bcIdle 2.4s ease-in-out infinite; }
+@keyframes bcIdle {
+  0%, 100% { transform: translateY(0) }
+  50%      { transform: translateY(-.25vw) }
+}
+
+.bc-track.is-running .bc-runner-art { animation: bcRun .42s linear infinite; }
+@keyframes bcRun {
+  0%, 100% { transform: translateY(0) rotate(0deg) }
+  25%      { transform: translateY(-.42vw) rotate(-4deg) }
+  50%      { transform: translateY(0) rotate(0deg) }
+  75%      { transform: translateY(-.26vw) rotate(4deg) }
+}
+
+.bc-runner.is-surge .bc-runner-art,
+.bc-runner.is-duel  .bc-runner-art { animation: bcSurge .22s linear infinite; }
+.bc-runner.is-duel.is-hot .bc-runner-art { animation-duration: .15s; }
+@keyframes bcSurge {
+  0%, 100% { transform: translateY(-.17vw) scale(1.14) rotate(-5deg) }
+  50%      { transform: translateY(-.6vw) scale(1.18) rotate(5deg) }
+}
+
+.bc-runner.is-stumble .bc-runner-art { animation: bcStumble .3s ease-in-out 4; }
+@keyframes bcStumble {
+  0%, 100% { transform: translateX(0) rotate(0deg) }
+  25%      { transform: translateX(-.42vw) rotate(-16deg) }
+  60%      { transform: translateX(.26vw) rotate(11deg) }
+}
+
+.bc-runner.is-jump .bc-runner-art { animation: bcJump .34s ease-out 3; }
+@keyframes bcJump {
+  0%, 100% { transform: translateY(-.17vw) scale(1.12) }
+  50%      { transform: translateY(-.78vw) scale(1.22) rotate(-7deg) }
+}
+
+.bc-runner.is-leading .bc-runner-art {
+  filter: drop-shadow(0 0 .8vw var(--racer, var(--accent)))
+          drop-shadow(0 .3vw .5vw rgba(0,0,0,.6));
+}
+
+/* Streaks, scaled to the stage. */
+.bc-runner.is-surge .bc-runner-art::before,
+.bc-runner.is-surge .bc-runner-art::after,
+.bc-runner.is-jump  .bc-runner-art::before,
+.bc-runner.is-duel  .bc-runner-art::before {
+  content: "";
+  position: absolute; right: 100%;
+  height: .26vw; border-radius: .13vw;
+  background: linear-gradient(270deg, var(--racer, var(--accent)), transparent);
+  pointer-events: none;
+}
+.bc-runner.is-surge .bc-runner-art::before,
+.bc-runner.is-jump  .bc-runner-art::before,
+.bc-runner.is-duel  .bc-runner-art::before { top: 30%; width: 3.2vw; margin-right: .26vw; animation: bcStreak .26s linear infinite; }
+.bc-runner.is-surge .bc-runner-art::after  { top: 62%; width: 2.1vw; margin-right: .5vw; animation: bcStreak .32s linear infinite .06s; }
+@keyframes bcStreak {
+  0%   { opacity: 0; transform: translateX(.35vw) }
+  40%  { opacity: .9 }
+  100% { opacity: 0; transform: translateX(-.5vw) }
+}
+
+/* Near miss. */
+.bc-runner.is-near .bc-runner-art::after {
+  content: "";
+  position: absolute; right: -.5vw; top: 25%;
+  width: .5vw; height: .5vw; border-radius: .1vw;
+  background: #fff; box-shadow: 0 0 .5vw #fff;
+  animation: bcSpark .34s linear 3;
+}
+@keyframes bcSpark {
+  0%   { opacity: 0; transform: translate(0,0) scale(.6) }
+  35%  { opacity: 1; transform: translate(.35vw,-.35vw) scale(1) }
+  100% { opacity: 0; transform: translate(.9vw,-.8vw) scale(.5) }
+}
+
+/* Home: stop the legs. The winner gets the hop. */
+.bc-runner.is-home .bc-runner-art,
+.bc-runner.is-finished .bc-runner-art { animation: bcSettle .5s ease-out both; }
+@keyframes bcSettle {
+  0%   { transform: translateY(-.26vw) scale(1.05) }
+  60%  { transform: translateY(.08vw) scale(.98) }
+  100% { transform: none }
+}
+.bc-runner.is-winner .bc-runner-art { animation: bcWin .5s ease-out 3; }
+@keyframes bcWin {
+  0%, 100% { transform: translateY(0) scale(1) }
+  40%      { transform: translateY(-1.2vw) scale(1.2) }
+  60%      { transform: translateY(-.35vw) scale(1.06) }
+}
+
+/* The split time on the board. */
+.bc-board-list li { grid-template-columns: 2.4vw 1fr auto; }
+.bc-time {
+  font-size: 1.05vw; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bc-board-list li.is-home .bc-time { color: var(--chalk); }
+.bc-board-list li.is-home { background: rgba(255,255,255,.03); }
+
+/* Final stretch: the whole field gets busier together. */
+.bc-track[data-heat="1"] .bc-runner-art { animation-duration: .38s }
+.bc-track[data-heat="2"] .bc-runner-art { animation-duration: .3s }
+.bc-track[data-heat="3"] .bc-runner-art { animation-duration: .24s }
+.bc-track[data-heat="3"] { box-shadow: inset 0 0 3vw rgba(229,1,27,.10); }
+
+
+/* Cinematic shared viewer: the race occupies the scene; chrome stays secondary. */
+.bc-stage.cinematic-race{background:#65bcec;color:#fff}
+.bc-stage .race-scenery{z-index:0}
+.bc-stage .bc-head,.bc-stage .bc-body,.bc-stage .bc-foot,.bc-stage .bc-overlay,.bc-stage .bc-winner,.bc-stage .bc-bar{position:relative;z-index:2}
+.bc-stage .bc-head{background:linear-gradient(180deg,rgba(5,13,25,.86),rgba(5,13,25,.35) 78%,transparent);border-bottom:0}
+.bc-stage .bc-body{background:transparent}
+.bc-stage .bc-track{background:linear-gradient(180deg,transparent 0 19%,rgba(42,94,44,.28) 19% 100%);border:0;box-shadow:none}
+.bc-stage .bc-lane{border-color:rgba(255,255,255,.26);background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(0,0,0,.05))}
+.bc-stage .bc-lane:nth-child(even){background:linear-gradient(90deg,rgba(0,0,0,.08),rgba(255,255,255,.04))}
+/* The single racer tag is styled once, with the Arena's, in screens.css. */
+.bc-stage .bc-board{align-self:start;margin:1vw;border:1px solid #ffffff30;border-radius:1vw;background:rgba(5,12,22,.7);backdrop-filter:blur(10px);box-shadow:0 .8vw 2vw #0005;overflow:hidden}
+.bc-stage .bc-board-head{background:rgba(255,255,255,.08)}
+.bc-stage .bc-finish{
+  /*
+    THE FINISH LINE IS A STRUCTURE STANDING ON THE COURSE.
+
+    It used to be a 0.65vw glowing bar at `right:42%`, z-index 4, sliding in
+    from translateX(55vw) - its own units, its own layer, ABOVE the racer
+    plane, and roughly eleven times the leader's screen speed. Every one of
+    those four things says "graphic", and together they are the whole "it
+    flies into the middle of the screen" complaint.
+
+    Now:
+      position   left: --finish-x, a ratio of the frame written from
+                 finishGroundRatio() - the SAME coordinate system
+                 presentationScreenRatio() puts the racers in
+      layer      z-index 0, so it sits above the scenery and BELOW both the
+                 Pixi canvas (z-index 1) and the DOM runners (2/3). The field
+                 runs IN FRONT of it, which is the single biggest reason it
+                 now reads as part of the course
+      motion     no transform, no CSS transition. It moves because its
+                 position moves, at ground speed, once per frame
+      form       posts planted in the lane band, a gantry over the top, a
+                 checkered face and a contact shadow on the ground
+
+    The lane band numbers below are LANE_BAND_TOP/BOTTOM with the gantry
+    allowed above the top one. If viewport.ts moves the ground, this moves
+    with it - see the note on LANE_BAND_TOP.
+  */
+  left:calc(var(--finish-x,1.02) * 100%);
+  right:auto;
+  top:14.5%;
+  bottom:6%;
+  width:1.9vw;
+  z-index:0;
+  transform:translateX(-50%);
+  /* The checkered face. A conic repeat is one paint, no extra elements. */
+  background-image:repeating-conic-gradient(#f4f7fa 0% 25%, #121a24 0% 50%);
+  background-size:.95vw .95vw;
+  border-left:.12vw solid rgba(255,255,255,.5);
+  border-right:.12vw solid rgba(0,0,0,.45);
+  /* A hint of lift off the grass, not a glow. 1.1vw of pure white read as a
+     lit UI column standing on the course. */
+  box-shadow:0 0 .45vw rgba(255,248,220,.22), inset 0 0 .6vw rgba(0,0,0,.4);
+  will-change:left;
+}
+/* The gantry: what makes it a structure over the course rather than a stripe
+   painted on it. Deliberately wider than the post it sits on. */
+.bc-stage .bc-finish::before{
+  /*
+    CAPPING THE POST, not floating above it. At top:-1.5vw this sat in the sky
+    band with clear grass between it and the post it was supposed to be
+    resting on, which reads as a detached chip rather than a crossbar - and a
+    detached chip is the exact "this is UI" cue the whole change is removing.
+    top:0 puts it ON the structure.
+  */
+  content:"";position:absolute;left:-1.9vw;right:-1.9vw;top:0;height:1.15vw;
+  background:linear-gradient(180deg,#f7f9fc,#c9d3dd 62%,#8e9aa6);
+  border-radius:.14vw;
+  box-shadow:0 .28vw .5vw rgba(0,0,0,.55), inset 0 -.14vw .28vw rgba(0,0,0,.3);
+}
+/* Planted, not floating. The contact shadow is the cheapest possible cue that
+   the thing has weight and is touching the ground the racers run on. */
+.bc-stage .bc-finish::after{
+  /*
+    The contact shadow was hung BELOW the structure's own box, at
+    bottom:-.55vw, which put it under the last lane and off the grass - so the
+    one cue that the thing has weight was drawn where nobody could see it.
+    It sits inside the base now and is dark enough to read against the course.
+  */
+  content:"";position:absolute;left:-2.1vw;right:-2.1vw;bottom:0;height:1.4vw;
+  background:radial-gradient(ellipse at 50% 100%,rgba(0,0,0,.62),rgba(0,0,0,.28) 45%,transparent 72%);
+  pointer-events:none;
+}
+/*
+  THE LINE TIMES THEM AS THEY TOUCH IT.
+
+  Rides the same --finish-x as the structure, so it cannot drift off the line
+  it is reporting. Above the racer plane on purpose - this one IS a graphic,
+  and a time nobody can read because a racer is standing on it is not a
+  timing display. --stamp-fade is written per frame from finishStamp().
+*/
+.bc-stage .bc-finish-stamp{
+  position:absolute;
+  left:calc(var(--finish-x,1.02) * 100%);
+  /*
+    Sits just above the gantry (14.5%) rather than at the top of the frame,
+    where a -42% drift clipped it against the track's own edge, and it lifts
+    by a quarter of its height rather than half - a stamp that leaves the
+    structure stops being the structure's reading of the time.
+  */
+  top:8%;
+  z-index:6;
+  transform:translate(-50%,calc(-25% * var(--stamp-fade,0)));
+  opacity:var(--stamp-fade,0);
+  padding:.15vw .6vw;
+  border-radius:.5vw;
+  background:rgba(5,12,22,.82);
+  border:1px solid rgba(255,255,255,.28);
+  color:var(--chalk,#fff);
+  /* vw everywhere else in this file, but a TIME has to stay readable: at
+     1.05vw this is 8px on an 800px window and 20px on an OBS canvas. */
+  font-size:clamp(11px,1.05vw,22px);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  pointer-events:none;
+  will-change:opacity,transform;
+}
+.bc-stage .bc-finish-stamp .bc-stamp-place{
+  color:#ffd84a;
+  margin-right:.45em;
+  padding-right:.45em;
+  border-right:1px solid rgba(255,255,255,.24);
+}
+.bc-stage .bc-clock{background:rgba(5,12,22,.7);border:1px solid #ffffff30;border-radius:.8vw;padding:.2vw .8vw;box-shadow:0 .5vw 1.5vw #0004}
+.bc-stage .bc-winner{background:radial-gradient(circle at 50% 45%,rgba(255,220,92,.34),rgba(255,157,28,.08) 26%,rgba(2,7,14,.62) 62%)}
+.bc-runner.trail-dust::before,.bc-runner.trail-spark::before,.bc-runner.trail-rainbow::before{content:"";position:absolute;right:68%;top:50%;width:66%;pointer-events:none;opacity:.9}
+.bc-runner.trail-dust::before{height:1.1vw;background:radial-gradient(circle,#dec6a0 0 20%,transparent 23%) 0 50%/1vw 1vw repeat-x}
+.bc-runner.trail-spark::before{height:1.2vw;background:radial-gradient(circle,#ffe45c 0 16%,transparent 20%) 0 50%/1.2vw 1.2vw repeat-x;filter:drop-shadow(0 0 .35vw #ffb800)}
+.bc-runner.trail-rainbow::before{height:.48vw;background:linear-gradient(#ff4d5d 0 20%,#ffd84a 20% 40%,#5ee87b 40% 60%,#56b7ff 60% 80%,#b56cff 80%);border-radius:99px;filter:blur(.08vw)}
+@media(max-width:800px){
+  .bc-stage .bc-body{grid-template-columns:1fr}
+  .bc-stage .bc-board{position:absolute;right:.5rem;top:.5rem;width:min(38vw,190px);max-height:42%;font-size:.72rem}
+  .bc-stage .bc-board-head{padding:.35rem .55rem}
+  .bc-stage .bc-board-list li{min-height:1.65rem;padding:.2rem .4rem}
+}
+
+/* Cinematic finish sequence shared by phones, desktop and OBS. */
+.bc-stage.is-finished .bc-head,.bc-stage.is-finished .bc-body,.bc-stage.is-finished .bc-foot{filter:saturate(.55) brightness(.48)}
+.bc-winner-art{display:block;width:min(22vw,280px);height:min(16vw,200px);margin:0 auto .8vw;animation:bcChampion .9s steps(4,end) infinite}
+.bc-winner-art svg,.bc-winner-art img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 1.2vw 1vw #0009) drop-shadow(0 0 1.2vw #ffd84a)}
+.bc-stage.is-finished .bc-winner-inner{animation:bcWinnerEnter .72s cubic-bezier(.2,.9,.2,1) both}
+.bc-stage.is-finished .bc-winner::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,#fff 0 2px,transparent 3px) 0 0/5.5vw 5.5vw,radial-gradient(circle,#ffd84a 0 2px,transparent 3px) 2vw 3vw/7vw 7vw;filter:drop-shadow(0 0 .35vw #ffd84a);animation:bcConfetti 1.45s linear infinite;opacity:.82}
+@keyframes bcWinnerEnter{from{opacity:0;transform:translateY(8vh) scale(.72)}to{opacity:1;transform:none}}
+@keyframes bcChampion{50%{transform:translateY(-1.2vw) rotate(-2deg) scale(1.06)}}
+@keyframes bcConfetti{to{background-position:4vw 12vw}}
+
+/* Open-field race view: one cinematic course, not twelve progress bars. */
+.bc-stage .bc-body{display:block;padding:.8vw 1.4vw 1.2vw}
+.bc-stage .bc-track{display:block;position:relative;width:100%;height:100%;min-height:0;border-radius:1.2vw;overflow:hidden;background:linear-gradient(180deg,rgba(82,183,235,.08) 0 42%,rgba(47,126,53,.14) 43% 100%)}
+.bc-stage .bc-lane{position:absolute;left:0;right:0;top:var(--lane-y);height:5.4vw;min-height:38px;padding:0;transform:translateY(-50%);border:0!important;background:transparent!important}
+.bc-stage .bc-runner{height:5.2vw;min-height:36px}
+.bc-stage .bc-runner-art{width:7.5vw;height:5.2vw;filter:drop-shadow(0 .5vw .55vw rgba(0,0,0,.65))}
+.bc-stage .bc-board{position:absolute;z-index:5;right:2vw;top:1vw;width:17vw;height:auto;max-height:none;margin:0;background:rgba(5,12,22,.76)}
+.bc-stage .bc-board-list{display:block}
+.bc-stage .bc-board-list li{height:2.45vw;min-height:27px;grid-template-columns:2vw 1fr;font-size:1vw;padding:0 .8vw}
+.bc-stage .bc-board-list li:nth-child(n+4){display:none}
+/*
+  THE SECOND .bc-finish BLOCK IS GONE, AND IT WAS THE BUG.
+
+  There were two of these, identical in specificity. The first (above) is the
+  live one and reads the current variable (--finish-arrival today). This one
+  was left behind by the change that renamed it, and being LATER in the
+  file it won the cascade for transform and opacity.
+
+  Nothing has written --finish-reveal since that change. So both declarations
+  fell back to 0, which resolved to translateX(55vw) and OPACITY 0: the
+  shared stage's finish stripe was parked offscreen and fully transparent for
+  the entire race, at every viewport width.
+
+  Deleting it does not change any value that was in effect - a variable
+  nothing sets has no effect to preserve - it just stops shadowing the rule
+  above, which carries the same right/width/z-index/box-shadow and the sweep
+  the Arena stage has always used. The two views now read the SAME variable,
+  written by the same finishPassProgress() call in each page's frame loop.
+*/
+.bc-stage .race-crowd{bottom:0;height:11%;opacity:.5}
+.bc-stage .race-hills{bottom:12%;height:42%}
+.bc-stage .race-hills.far{bottom:24%}
+@media(max-width:800px){
+  .bc-stage .bc-board{width:min(42vw,190px);right:.5rem;top:.5rem}
+  .bc-stage .bc-board-list li{height:1.7rem;font-size:.72rem}
+  .bc-stage .bc-runner-art{width:12vw;height:8vw}
+  .bc-stage .bc-runner{height:8vw}
+}
+
+
+/* Racer-first composition: direct left positioning replaces full-width rails. */
+.bc-stage .bc-runner{
+  left:3%;right:auto;width:10vw;height:6.8vw;min-height:48px;
+  transform:translateX(-50%);will-change:left;
+}
+.bc-stage .bc-runner-art{width:10vw;height:6.8vw;filter:drop-shadow(0 .65vw .6vw rgba(0,0,0,.72))}
+.bc-stage .bc-lane{height:6.6vw}
+.bc-stage .race-scenery{transform:translate3d(calc(var(--race-pan,0) * -5%),0,0)}
+.bc-stage.is-racing .bc-head{padding:.65vw 1.4vw .45vw;background:linear-gradient(180deg,rgba(5,13,25,.8),transparent)}
+.bc-stage.is-racing .bc-brand-sub,.bc-stage.is-racing .bc-sub{display:none}
+.bc-stage.is-racing .bc-event{font-size:2vw}
+.bc-stage.is-racing .bc-brand-mark{font-size:1.8vw}
+.bc-stage.is-racing .bc-clock{font-size:2.6vw}
+.bc-stage .bc-bar{opacity:.18;transition:opacity .2s}
+.bc-stage .bc-bar:hover,.bc-stage .bc-bar:focus-within{opacity:1}
+.bc-stage.is-racing .bc-foot{opacity:.28}
+.bc-stage .bc-board{border-color:rgba(255,255,255,.2);box-shadow:0 .8vw 2vw #0008}
+/*
+  `.bc-stage .bc-finish{right:42%}` WAS HERE, and it was the third place in
+  this file that claimed to know where the finish line stands. It is placed
+  from --finish-x now - one declaration, one coordinate system. A stray
+  `right` is how the last two regressions in this element started.
+*/
+@media(max-width:800px){
+  .bc-stage .bc-runner{width:16vw;height:10.8vw}
+  .bc-stage .bc-runner-art{width:16vw;height:10.8vw}
+  .bc-stage .bc-lane{height:10vw}
+  .bc-stage.is-racing .bc-event{font-size:4vw}
+}
+
+
+/* ---------------- commissioner race console (v1.76) ---------------- */
+.bc-panel {
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 94%, var(--accent) 6%), var(--panel));
+}
+.bc-console-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.bc-console-head h2 { margin: 2px 0 4px; }
+.bc-console-head p { margin: 0; max-width: 54ch; }
+.bc-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.bc-state-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.bc-state--running .bc-state-dot { background: var(--accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent); }
+.bc-state--paused .bc-state-dot { background: #f2b84b; }
+.bc-state--finished .bc-state-dot { background: #77a7ff; }
+.bc-command {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(260px, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+.bc-primary {
+  min-height: 74px;
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  font-size: 18px;
+}
+.bc-primary small { font-size: 11px; font-weight: 600; opacity: .76; }
+.bc-transport { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bc-transport .btn { min-height: 58px; }
+.bc-console-foot {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.bc-view-options { display: flex; gap: 14px; padding: 0; margin: 0; border: 0; }
+.bc-view-options legend { width: 100%; margin-bottom: 7px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.bc-view-options label { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; }
+.bc-view-options input { width: auto; }
+.bc-result-actions { display: flex; gap: 8px; }
+.bc-result-actions .danger:not(:disabled) { color: #ff8f8f; border-color: color-mix(in srgb, #ff6b6b 46%, var(--line)); }
+.bc-setup { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.bc-setup summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 750; }
+.bc-setup p { margin: 10px 0 8px; }
+.bc-url input { min-width: 0; }
+
+@media (max-width: 700px) {
+  .bc-console-head, .bc-console-foot { align-items: stretch; flex-direction: column; }
+  .bc-state { align-self: flex-start; }
+  .bc-command { grid-template-columns: 1fr; }
+  .bc-primary { min-height: 68px; }
+  .bc-transport .btn { min-height: 50px; }
+  .bc-result-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .bc-url { align-items: stretch; flex-direction: column; }
+  .bc-url .btn { min-height: 44px; }
+}
+
+
+/*
+  The two-step launch is gone, and so is its numbering.
+
+  .bc-launch styled an "Open race view" block that sat above Start, and
+  .bc-command::before labelled Start as step 2 of it. There is one step now -
+  press Start, the Race View opens and plays - so a card announcing itself as
+  the second half of something would be describing a flow that no longer
+  exists. The OBS URL it used to compete with lives in the setup drawer.
+*/
+
+
+/* Responsive race stage: safe lanes and true viewport sizing on every device. */
+body.broadcasting,
+body.broadcasting .view { width:100%; height:100%; }
+.bc-stage {
+  width:100dvw;
+  height:100dvh;
+  max-width:100%;
+  max-height:100%;
+}
+.bc-track,
+.arena-track-wrap.cinematic-race .track {
+  contain:layout paint;
+}
+
+/* Wide phones and short browser windows must size racers from height, not width. */
+@media (orientation:landscape) and (max-height:600px) {
+  .bc-stage { grid-template-rows:auto minmax(0,1fr); }
+  .bc-stage .bc-head {
+    gap:10px;
+    padding:6px max(10px,env(safe-area-inset-right)) 5px max(10px,env(safe-area-inset-left));
+  }
+  .bc-stage .bc-brand-sub,
+  .bc-stage .bc-sub,
+  .bc-stage .bc-foot { display:none; }
+  .bc-stage .bc-brand-mark { font-size:clamp(15px,4.4vh,24px); }
+  .bc-stage .bc-event { font-size:clamp(16px,5.2vh,28px); }
+  .bc-stage .bc-clock { font-size:clamp(20px,6.5vh,34px); }
+  .bc-stage .bc-body { min-height:0; padding:4px 8px 7px; }
+  .bc-stage .bc-track { height:100%; border-radius:8px; }
+  .bc-stage .bc-runner,
+  .bc-stage .bc-runner-art {
+    width:15vh;
+    height:10vh;
+    min-height:30px;
+  }
+  .bc-stage .bc-lane { height:10.5vh; min-height:32px; }
+  .bc-stage .bc-lane-name {
+    top:72%;
+    max-width:18vh;
+    font-size:clamp(8px,2.5vh,12px);
+  }
+  .bc-stage .bc-board {
+    width:min(31vw,180px);
+    max-height:42%;
+    overflow:hidden;
+  }
+  .bc-stage .bc-board-list li {
+    min-height:20px;
+    height:5.8vh;
+    font-size:clamp(8px,2.4vh,11px);
+  }
+
+  .arena-track-wrap.cinematic-race .track {
+    height:clamp(250px,calc(100dvh - 92px),460px);
+    min-height:0;
+  }
+  .arena-track-wrap.cinematic-race .runner,
+  .arena-track-wrap.cinematic-race .runner-art {
+    width:56px;
+    height:38px;
+  }
+  .arena-track-wrap.cinematic-race .lane { height:40px; }
+}
+
+/* Very narrow portrait viewers get extra vertical breathing room as well. */
+@media (orientation:portrait) and (max-width:520px) {
+  .bc-stage { grid-template-rows:auto minmax(0,1fr) auto; }
+  .bc-stage .bc-head { padding:10px 12px 7px; }
+  .bc-stage .bc-body { min-height:0; padding:6px 8px 10px; }
+  .bc-stage .bc-foot { padding:6px 12px calc(6px + env(safe-area-inset-bottom)); }
+  .bc-stage .bc-runner,
+  .bc-stage .bc-runner-art { width:14vw; height:9.5vw; }
+}
+
+
+/*
+  Mobile commissioner console: ordinary document flow, never a drawer.
+  This overrides the legacy sticky operator rule in style.css.
+*/
+@media (max-width:720px) {
+  .bc-panel {
+    position:static;
+    inset:auto;
+    bottom:auto;
+    z-index:auto;
+    width:auto;
+    max-width:100%;
+    max-height:none;
+    overflow:visible;
+    overscroll-behavior:auto;
+    margin-bottom:calc(var(--s-5) + env(safe-area-inset-bottom));
+    box-shadow:var(--e-1);
+  }
+  .bc-panel .bc-console-head,
+  .bc-panel .bc-console-foot,
+  .bc-panel .bc-command,
+  .bc-panel .bc-transport,
+  .bc-panel .bc-result-actions {
+    min-width:0;
+    max-width:100%;
+  }
+  .bc-panel .bc-command,
+  .bc-panel .bc-transport,
+  .bc-panel .bc-result-actions {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .bc-panel .btn,
+  .bc-panel .btn.small {
+    width:100%;
+    min-width:0;
+    min-height:48px;
+    white-space:normal;
+  }
+  .bc-panel .bc-view-options {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    width:100%;
+  }
+  .bc-panel .bc-setup,
+  .bc-panel .bc-url,
+  .bc-panel .bc-url input { max-width:100%; min-width:0; }
+  #arena-stage {
+    scroll-margin-top:calc(64px + env(safe-area-inset-top));
+    scroll-margin-bottom:calc(70px + env(safe-area-inset-bottom));
+  }
+}
+
+
+/* Full-field standings rail: never overlays the course or finish line. */
+.bc-stage .bc-body {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) clamp(150px,19vw,330px);
+  gap:clamp(5px,1vw,18px);
+}
+.bc-stage .bc-body.no-board { grid-template-columns:minmax(0,1fr); }
+.bc-stage .bc-board {
+  position:relative;
+  inset:auto;
+  right:auto;
+  top:auto;
+  width:auto;
+  height:100%;
+  max-height:100%;
+  margin:0;
+  align-self:stretch;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  border-radius:clamp(6px,.8vw,14px);
+}
+.bc-stage .bc-board-list {
+  display:grid;
+  grid-auto-rows:minmax(0,1fr);
+  align-content:stretch;
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+}
+.bc-stage .bc-board-list li,
+.bc-stage .bc-board-list li:nth-child(n+4) {
+  display:grid;
+  grid-template-columns:clamp(18px,1.7vw,32px) minmax(0,1fr) auto;
+  height:auto;
+  min-height:0;
+  padding:0 clamp(4px,.55vw,10px);
+  gap:clamp(3px,.35vw,7px);
+  font-size:clamp(8px,.78vw,14px);
+}
+.bc-stage .bc-board-head {
+  padding:clamp(5px,.55vw,10px) clamp(6px,.7vw,12px);
+  font-size:clamp(8px,.7vw,12px);
+}
+.bc-stage .bc-pos { font-size:clamp(10px,1vw,18px); }
+.bc-stage .bc-time { font-size:clamp(7px,.68vw,12px); }
+
+@media (max-width:800px) {
+  .bc-stage .bc-body {
+    grid-template-columns:minmax(0,1fr) minmax(112px,31vw);
+    gap:5px;
+  }
+  .bc-stage .bc-board {
+    position:relative;
+    inset:auto;
+    width:auto;
+    height:100%;
+    max-height:100%;
+    overflow:hidden;
+  }
+  .bc-stage .bc-board-list li,
+  .bc-stage .bc-board-list li:nth-child(n+4) {
+    display:grid;
+    height:auto;
+    min-height:0;
+    grid-template-columns:18px minmax(0,1fr) auto;
+    padding:0 4px;
+    font-size:clamp(7px,2vw,10px);
+  }
+  .bc-stage .bc-time { font-size:clamp(6px,1.6vw,9px); }
+}
+
+
+/* Pixi replaces racer art only. The pre-migration DOM remains the visual
+   contract for scenery, scoreboard, countdown, finish line and nameplates. */
+.arena-track-wrap.cinematic-race .countdown { position:absolute; inset:0; }
+.arena-track-wrap .arena-effect-defs { position:absolute; width:0; height:0; overflow:hidden; }
+.arena-track-wrap.has-pixi-race .runner-art {
+  visibility:hidden!important;
+  opacity:0!important;
+}
+.bc-track.has-pixi-race .bc-runner-art {
+  visibility:hidden!important;
+  opacity:0!important;
+}
+.bc-stage .bc-overlay {
+  position:absolute!important;
+  inset:0!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0!important;
+  z-index:10!important;
+  pointer-events:none!important;
+  overflow:hidden!important;
+  contain:layout paint;
+}
+.arena-pixi-host,
+.arena-pixi-host canvas { display:block!important; width:100%!important; height:100%!important; }
+
+/*
+  THE TRANSITION ON `right` IS GONE, AND IT WAS A TRAP.
+
+  Nothing has written `right` on this element since it started being placed
+  from --finish-x, so the transition had nothing to animate - but it would
+  have quietly smeared the first frame of any future change to `right`, and a
+  CSS transition on top of a per-frame variable smears rather than smooths.
+  The position is a per-frame value now. It does not want help.
+*/
+/* Glow only. The stripe does not move any more: its position is the
+   shared FINISH_LINE_RATIO and the geometry is camera-independent. */
+/*
+  Emphasis, not illumination. 16px of white plus 28px of gold turned the
+  structure into a lit column standing on the grass at the exact moment it is
+  supposed to read as part of the course - and the finish camera engages right
+  as the field arrives, so that is the frame everybody actually sees.
+*/
+.bc-stage[data-camera="finalStretch"] .bc-finish,
+.bc-stage[data-camera="finish"] .bc-finish { filter:drop-shadow(0 .2vw .4vw rgba(0,0,0,.5)) drop-shadow(0 0 .5vw rgba(255,216,74,.45)); }
+.bc-stage[data-camera="finalStretch"] .race-scenery,
+.bc-stage[data-camera="finish"] .race-scenery,
+.arena-track-wrap[data-camera="finalStretch"] .race-scenery,
+.arena-track-wrap[data-camera="finish"] .race-scenery {
+  transform:translate3d(calc(var(--race-pan,0) * -7%),0,0)
+            scale(calc(1 + var(--finish-camera,0) * .05))!important;
+  transform-origin:50% 60%;
+}
+.bc-stage[data-camera="finish"] .bc-track,
+.arena-track-wrap[data-camera="finish"] .track {
+  box-shadow:inset 0 -42px 38px rgba(4,11,9,.48),inset 0 0 80px rgba(255,220,92,.08);
+}
+/* The canvas is no longer stretched by the finish camera: the racers on
+   it are positioned by a camera-independent map, and scaling the host on
+   top of that moved them a second time. */
+
+@media(max-width:800px){
+  .arena-track-wrap.has-pixi-race .runner,
+  .bc-track.has-pixi-race .bc-runner{z-index:3}
+}
+
+
+/* =====================================================================
+   THE COURSE (v1.102) - the racers run ON something now
+   ---------------------------------------------------------------------
+   WHAT WAS WRONG. The scenery was a skybox: sky over far hills over near
+   hills, with the crowd pinned to the BOTTOM of the stage, and it was a
+   sibling of the header and the footer - so its percentages measured the
+   whole window while the lanes measured the track. Nothing kept the two
+   coordinate systems in step. The horizon landed in the middle of the
+   field, the top five or six racers were drawn above it, and the crowd was
+   below the bottom lane's feet. Twelve characters running through the sky
+   with the audience underneath them.
+
+   THE COMPOSITION NOW. Flat and horizontal, and it is one stack inside the
+   track, so 0% and 100% are the top and bottom of the racers' own box:
+
+     0     -  11%   sky, a strip, not a backdrop
+     3     -  13%   distant hills and a treeline, BEHIND everything
+     6     -  14%   the stand, the crowd, the far fence
+     12.5  -  16.5% DFL banners along the top of the fence
+     16.5  - 100%   THE RACE COURSE. Every lane centre is between
+                    LANE_BAND_TOP (18%) and LANE_BAND_BOTTOM (92%), so
+                    every racer's feet are on this surface with course
+                    visible above and below them.
+     98    - 100%   the near verge, in front of the bottom lane
+
+   The one rule the numbers exist to enforce: a racer is drawn centred on a
+   lane, a drawn character is 15 rows at PIXEL_SIZE 3, and lane 1's feet
+   therefore land at about 21% - four and a half points of course above
+   them. src/arena/viewport.spec.ts fails if that stops being true at any
+   size the app runs at.
+
+   SCOPED WITH THREE CLASSES ON PURPOSE. screens.css loads after this file
+   and styles `.cinematic-race .race-sky` and friends with two, so a
+   two-class rule here would lose the cascade to the old skybox no matter
+   what it said. `.bc-stage.cinematic-race` wins on specificity instead of
+   on load order, which is not something a future file reorder can undo.
+
+   Art direction: stylised league grounds. Flat 2D, no gradients pretending
+   to be photographs, no stadium, no lane-numbered athletics track. The
+   course supports the racers and stays quiet behind them.
+   ===================================================================== */
+
+/* Full bleed: the course is the picture, so it gets the whole row. */
+.bc-stage.cinematic-race .bc-body{padding:0}
+.bc-stage.cinematic-race .bc-track{
+  border-radius:0;border:0;overflow:hidden;
+  /* Under the course, and visible nowhere - a wrong colour here is how you
+     find out one of the bands has a gap in it. */
+  background:#2c4a2c;
+}
+/* Dark surround, so the lit course reads as the subject rather than as a
+   brighter patch of one big blue sky. */
+.bc-stage.cinematic-race{background:#0a1218}
+
+.bc-stage.cinematic-race .race-scenery{inset:0;z-index:0;overflow:hidden}
+
+/* --- behind the course ------------------------------------------------ */
+.bc-stage.cinematic-race .race-sky{
+  inset:auto;left:0;right:0;top:0;height:11%;
+  background:linear-gradient(180deg,#4fa8d8 0,#84cdea 58%,#c6e6ef 100%);
+}
+/* Two clouds, small, because there is not much sky to put them in. */
+.bc-stage.cinematic-race .race-sky::after{
+  content:"";position:absolute;left:14%;top:16%;
+  width:3.4vw;height:1vw;border-radius:99px;background:#fff;opacity:.72;
+  box-shadow:14vw .5vw 0 .2vw #fff,31vw -.2vw 0 .1vw #fff;
+}
+.bc-stage.cinematic-race .race-hills{
+  left:-10%;width:120%;bottom:87%;height:7%;
+  background:#4b7f45;opacity:.95;
+}
+.bc-stage.cinematic-race .race-hills.far{
+  bottom:89%;height:8%;background:#7fb072;opacity:.8;transform:scaleX(1.08);
+}
+/* The stand: a plain plate with a roof line. Structure, not a building. */
+.bc-stage.cinematic-race .race-stands{
+  position:absolute;left:0;right:0;bottom:86%;height:8%;
+  background:linear-gradient(180deg,#2b3d4c 0 18%,#22323f 18% 100%);
+  border-top:.22vw solid #f2efdd;
+}
+.bc-stage.cinematic-race .race-crowd{
+  bottom:87%;height:5.4%;opacity:.85;border-top:0;
+  background:
+    radial-gradient(circle,#f7cf57 0 24%,transparent 27%) 0 0/1.1vw 1.1vw,
+    radial-gradient(circle,#e45b6c 0 24%,transparent 27%) .55vw .55vw/1.1vw 1.1vw,
+    radial-gradient(circle,#7fd7f0 0 24%,transparent 27%) .28vw .82vw/1.6vw 1.6vw,
+    transparent;
+}
+/* The far fence, and the DFL signage hung along it. */
+.bc-stage.cinematic-race .race-banners{
+  position:absolute;left:0;right:0;bottom:83.5%;height:4%;
+  display:flex;align-items:stretch;gap:.5vw;padding:0 1vw;
+  font-family:"Rajdhani",system-ui,sans-serif;
+}
+.bc-stage.cinematic-race .race-banners span{
+  flex:1 1 0;display:grid;place-items:center;
+  font-size:1.05vw;font-weight:700;letter-spacing:.18em;line-height:1;
+  color:#0d1b12;background:#e9e2c6;border-bottom:.16vw solid #b9ae86;
+  border-radius:.12vw;
+}
+.bc-stage.cinematic-race .race-banners span:nth-child(even){
+  color:#f4f1e2;background:#2f8f4f;border-bottom-color:#1d6234;
+}
+.bc-stage.cinematic-race .race-rail{
+  position:absolute;left:0;right:0;bottom:83%;height:1.1%;
+  background:linear-gradient(180deg,#d8d3bd 0 45%,#8d8874 45% 100%);
+}
+
+/* --- the running surface --------------------------------------------- */
+.bc-stage.cinematic-race .race-course{
+  position:absolute;left:0;right:0;top:16.5%;bottom:0;
+  background:
+    /* mown bands, so the surface has depth without competing for attention */
+    repeating-linear-gradient(180deg,rgba(0,0,0,.05) 0 3.9%,transparent 3.9% 7.8%),
+    /* scuffed running line down the middle of the field */
+    linear-gradient(180deg,transparent 0 26%,rgba(150,116,66,.16) 32% 74%,transparent 80% 100%),
+    linear-gradient(180deg,#5f9440 0,#69a046 34%,#71a94c 72%,#6a9f47 100%);
+  box-shadow:inset 0 .35vw .9vw rgba(0,0,0,.22);
+}
+/* The kerb where the course meets the fence: a hard edge sells the plane. */
+.bc-stage.cinematic-race .race-course::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:.9%;
+  background:#cbc6ad;opacity:.5;
+}
+.bc-stage.cinematic-race .race-verge{
+  position:absolute;left:0;right:0;bottom:0;height:2%;
+  background:
+    radial-gradient(circle,rgba(28,50,24,.5) 0 22%,transparent 26%) 0 0/.9vw .9vw,
+    linear-gradient(180deg,#4c7a34,#3d6329);
+}
+
+/* --- the two structures on the course -------------------------------- */
+/*
+  Both of these span the RUNNING SURFACE, not the whole track. A stripe that
+  ran from the top of the frame to the bottom crossed the sky, the crowd and
+  the banners, which is the same mistake as putting racers up there.
+*/
+/*
+  The finish structure's band and gantry are declared ONCE, with the rest of
+  it, in the `.bc-stage .bc-finish` block above. They used to be here as well
+  - a second `top/bottom` and a second, flatter `::before` - and being later
+  and more specific this copy silently won, so edits made up there had no
+  effect on the live view. That is the same shadowing bug this file has
+  already had once with --finish-reveal.
+*/
+/*
+  THE STARTING GRID, so an idle Race View looks like racers waiting to go
+  rather than racers stopped for no reason. Fixed at TRACK_START (4% of the
+  track width, the idle screen ratio), and it is scenery: nothing reads it.
+*/
+.bc-stage.cinematic-race .race-start-gate{
+  position:absolute;left:4%;top:16.5%;bottom:1.5%;width:.28vw;z-index:1;
+  transform:translateX(-50%);
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.85) 0 1.2vh,rgba(255,255,255,.25) 1.2vh 2.4vh);
+  opacity:.5;transition:opacity .3s ease;
+}
+/* It belongs to the start. Once the field is away it has nothing to say. */
+.bc-stage.cinematic-race[data-race-state="running"] .race-start-gate,
+.bc-stage.cinematic-race[data-race-state="finished"] .race-start-gate{opacity:.14}
+
+/*
+  AND THE FINISH LINE LEAVES WHEN THE RACE IS OVER.
+
+  It arrives about a second before the winner and has to stand on the line
+  while the rest of the field comes through - with a static ground, progress
+  1.0 maps to FINISH_LINE_RATIO for everybody, so a line anywhere else is a
+  line nobody actually crosses. What it must not do is stay in shot afterwards
+  under the winner card. data-race-state is "finished" from the last official
+  finish plus WINNER_REVEAL_DELAY_MS, so this is the exit, for free.
+*/
+.bc-stage.cinematic-race .bc-finish{transition:opacity .3s ease,filter .25s ease}
+.bc-stage.cinematic-race[data-race-state="finished"] .bc-finish{opacity:0}
+
+/*
+  THE COURSE HAS ARRIVED. Written by broadcast.js from finish.courseStopped, which
+  is time-derived - so it cannot flicker when a racer collapses, which is exactly
+  how the previous attempt at freezing the course went wrong.
+
+  Belt to the JS's braces: the blur is already zeroed and the pan already held in
+  the frame loop, and this stops any CSS-side scenery motion as well so there is
+  one visual answer rather than two halves of one.
+*/
+.bc-stage[data-course-stopped="true"] .race-scenery,
+.bc-stage[data-course-stopped="true"] .race-scenery * {
+  animation-play-state: paused;
+}
+.bc-stage[data-course-stopped="true"] .race-scenery { filter: none; }
+
+/*
+  AND THE START GATE GOES once the field is away. It marked TRACK_START for a
+  standing grid; with the finish structure in shot it is just a second vertical
+  line arguing with the first. This replaces the old opacity:.14, which left a
+  ghost of it on screen.
+*/
+.bc-stage.cinematic-race[data-race-state="running"] .race-start-gate,
+.bc-stage.cinematic-race[data-race-state="finished"] .race-start-gate {
+  display: none;
+}
+
+/* --- standing by ------------------------------------------------------ */
+/*
+  Entering the Race View is not starting the race, so the idle view has to
+  say so. The commissioner gets a legible control bar to find START in, and
+  the footer says what the screen is waiting for.
+*/
+.bc-stage.cinematic-race[data-race-state="idle"] .bc-bar{opacity:.92}
+.bc-stage.cinematic-race[data-race-state="idle"] .bc-bar.on{opacity:1}
+/* The GO button is the loud one on the deck, so it carries both colours:
+   the primary edge it always had, and a secondary-weighted wash behind it. */
+.bc-btn-go{
+  font-weight:700;
+  border-color:color-mix(in srgb,var(--accent) 60%,transparent);
+  background:linear-gradient(135deg,
+    color-mix(in srgb,var(--accent) 26%,transparent),
+    color-mix(in srgb,var(--accent-2) 26%,transparent));
+}
+.bc-stage.cinematic-race[data-race-state="idle"] .bc-foot{opacity:1}
+.bc-stage.cinematic-race[data-race-state="idle"] #bc-status{color:var(--accent)}
+
+@media(max-width:800px){
+  /* Phones get a slightly taller sky and banner strip because the track is
+     shorter in absolute terms; the band boundaries stay put so the grounding
+     invariant is unchanged. */
+  .bc-stage.cinematic-race .race-banners span{font-size:2.1vw;letter-spacing:.1em}
+  .bc-stage.cinematic-race .race-sky::after{width:6vw;height:1.8vw}
+  /* Phones get a chunkier crossbar because vw shrinks it, but it STAYS ON the
+     post - `top` is not a phone concern and setting it here is what put the
+     gantry back in the sky after it had been fixed. */
+  .bc-stage .bc-finish::before{height:2.4vw;left:-3vw;right:-3vw}
+}
+
+@media(prefers-reduced-motion:reduce){
+  /* The course is static art either way; only the gate's fade is motion. */
+  .bc-stage.cinematic-race .race-start-gate{transition:none}
+}

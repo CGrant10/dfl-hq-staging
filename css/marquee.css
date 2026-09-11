@@ -1,0 +1,311 @@
+/* =====================================================================
+   marquee.css - THE DFL BROADCAST LAYER
+   ---------------------------------------------------------------------
+   Named marquee, and prefixed mq-, because broadcast.css is already taken
+   by the 1920x1080 OBS stage for Arena races. Two files called broadcast
+   that mean different things is how a codebase rots.
+
+   WHAT THIS IS
+
+   An ACCENT LAYER for the handful of screens that are an occasion: a live
+   golf match, an Arena final, a championship. It is the fight poster
+   voice - big margin, team against team, a status that says who is winning
+   in words - and it is deliberately small enough to read in one sitting.
+
+   WHAT THIS IS NOT
+
+   It is not a theme, and normal DFL HQ never sees it. Nothing in this file
+   applies unless a .mq-card wrapper is on the page, so the front page, the
+   rules, the keepers, the fees and the record book are untouched by it. If
+   this ever starts appearing on ordinary screens, the answer is to remove
+   it from those screens rather than to tone this file down - the whole
+   value of a marquee is that most things are not one.
+
+   IT IS THE EXISTING IDENTITY, LOUDER. Rajdhani, the crest red and blue,
+   the same tokens for space and radius. There is no new palette here, no
+   borrowed branding, and nothing from anybody else's wrestling promotion -
+   the drama comes from scale and contrast, which are free.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   THE CARD
+
+   Full-bleed on a phone, like the front page hero, because a marquee that
+   sits inside the page margin is a panel rather than an event.
+   --------------------------------------------------------------------- */
+.mq-card {
+  position: relative;
+  overflow: hidden;
+  margin: 0 calc(var(--s-4) * -1) var(--s-4);
+  padding: var(--s-5) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(90% 60% at 50% 0%, color-mix(in srgb, var(--accent-fill) 12%, transparent), transparent 70%),
+    linear-gradient(180deg, #11161f, var(--bg));
+}
+
+/* The one flourish: a thin brand rule across the top, so the block reads as
+   a broadcast lower-third rather than as another card. */
+.mq-card::before {
+  content: "";
+  position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: var(--accent-sweep);
+}
+
+/* ---------------------------------------------------------------------
+   THE BILLING - "MAIN EVENT", "ROUND 2", "MATCH 3"
+   --------------------------------------------------------------------- */
+.mq-billing {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+.mq-tag {
+  font-family: var(--font-display);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 3px var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+}
+/* MAIN EVENT is the only billing that earns the crest red. Everything else
+   on the bar is furniture telling you where you are. */
+.mq-tag.is-main {
+  color: var(--on-accent);
+  border-color: transparent;
+  background: var(--accent-sweep-135);
+  letter-spacing: .2em;
+}
+.mq-tag.is-live {
+  color: var(--danger-ink);
+  border-color: var(--danger-line);
+  background: var(--danger-bg);
+  display: inline-flex; align-items: center; gap: var(--s-1);
+}
+.mq-tag.is-live::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-fill);
+  animation: mq-pulse 1.8s var(--ease) infinite;
+}
+@keyframes mq-pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+.mq-tag.is-final { color: var(--text); border-color: var(--control-line); }
+
+/* ---------------------------------------------------------------------
+   THE TALE OF THE TAPE
+
+   Two sides and a VS. The names are the billing, the figures are the
+   result, and on a phone this must not wrap - which is why the middle
+   column is fixed and the two outer ones are free to shrink.
+   --------------------------------------------------------------------- */
+.mq-tape {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--s-2);
+}
+.mq-side { display: grid; gap: var(--s-1); justify-items: center; text-align: center; min-width: 0; }
+.mq-side-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  line-height: var(--lh-snug);
+  /* Two lines, then stop. A four-man scramble team has long names and the
+     poster cannot grow to fit them. */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+  /*
+    min-width: 0 IS LOAD-BEARING, and max-width: 100% above does nothing
+    without it. This is a grid item, so its default min-width is `auto` =
+    its min-content width - and an automatic minimum size WINS over
+    max-width. A team called "Team LaFountain" has a 128px min-content
+    width, so it rendered 128px wide inside a 110px column and spilled 18px
+    past the card, straight under the broadcast stage's next-slide arrow at
+    375px. Capping it here fixes the golf match card at narrow widths too.
+
+    break-word rather than anywhere: it wraps between words first and only
+    breaks inside one when a single word genuinely cannot fit. `anywhere`
+    was tried once before and split short words mid-letter.
+  */
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.mq-side-score {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--racer, var(--text));
+}
+/* The trailing side is dimmed, never crossed out - the winner should be
+   obvious without the loser being decorated. */
+.mq-side.is-down { opacity: .5; }
+.mq-side.is-up .mq-side-score { color: var(--chalk); }
+
+.mq-vs {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  color: var(--muted);
+  padding: 0 var(--s-1);
+}
+
+/* A team's colour, when the data has one, as a bar under the name. This is
+   the only place a team colour is allowed to be decorative. */
+.mq-side-bar {
+  width: 34px; height: 3px; border-radius: 2px;
+  background: var(--racer, var(--line));
+}
+
+/* ---------------------------------------------------------------------
+   THE STATUS - the line that says what is happening, in words
+   --------------------------------------------------------------------- */
+.mq-status {
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  display: grid;
+  gap: var(--s-1);
+  justify-items: center;
+  text-align: center;
+}
+/* The mood, and it is the loudest text on the block after the figures -
+   "ABSOLUTE BEATDOWN" is the headline the screenshot is taken for. */
+.mq-mood {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-bold);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  line-height: var(--lh-tight);
+}
+.mq-mood.is-hot   { color: var(--accent-2); }
+.mq-mood.is-level { color: var(--warn-ink); }
+.mq-mood.is-done  { color: var(--chalk); }
+.mq-where {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------------
+   Somebody who has asked for less motion gets a still marquee. The pulse
+   is the only movement in here and it is not carrying any information.
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .mq-tag.is-live::before { animation: none; }
+}
+
+/* ---------------------------------------------------------------------
+   THE GUEST STRIP
+
+   Not marquee styling - it lives here because it is the other half of
+   the golf-event work and it is three rules. Ordinary card, ordinary
+   button; a sign-in is not an occasion.
+   --------------------------------------------------------------------- */
+.guest-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s-3); flex-wrap: wrap;
+}
+.guest-strip.is-on { border-left: 2px solid var(--ok-line); }
+.guest-who { display: block; font-family: var(--font-display); font-size: var(--fs-h3); font-weight: var(--fw-bold); }
+.guest-form { width: 100%; }
+.guest-row { display: flex; gap: var(--s-2); align-items: center; }
+.guest-row input { flex: 1 1 auto; text-transform: uppercase; }
+.guest-row .btn { flex: 0 0 auto; }
+.guest-pick { width: 100%; display: grid; gap: var(--s-2); }
+.guest-list { display: grid; gap: var(--s-2); max-height: 46vh; overflow-y: auto; }
+.dfl-battle-share { display: flex; justify-content: flex-end; padding: var(--s-2) var(--s-3) 0; }
+.golf-guest-admin .guest-code-form { display: grid; gap: var(--s-2); }
+.golf-guest-admin .guest-code-state { margin-bottom: var(--s-2); }
+.golf-guest-admin .guest-code-state.tiny:not(.muted) { color: var(--ok); }
+
+/* ---------------------------------------------------------------------
+   THE GUEST JOIN FLOW  (golf-join.js)
+
+   Four steps, one at a time, each one a question with an obvious answer.
+   Plain tokens - a sign-in is not an occasion, so nothing in here borrows
+   the marquee treatment above.
+   --------------------------------------------------------------------- */
+.gj { display: grid; gap: var(--s-4); }
+.gj-head { display: grid; gap: var(--s-1); }
+.gj-kicker {
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--accent-2);
+}
+.gj-title {
+  font-family: var(--font-display); font-size: var(--fs-h1);
+  font-weight: var(--fw-bold); letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight); text-transform: uppercase;
+}
+.gj-sub { margin: 0; font-size: var(--fs-label); color: var(--muted); }
+.gj-form { display: grid; gap: var(--s-2); }
+/* The code is short and shouty; the field should look like it expects that. */
+.gj-form input {
+  text-transform: uppercase;
+  letter-spacing: var(--ls-wide);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  text-align: center;
+}
+.gj-msg { margin: 0; }
+/* Capped and scrolled: a twenty-player field must not push the buttons off
+   the bottom of a phone. */
+.gj-list { display: grid; gap: var(--s-2); max-height: 48vh; overflow-y: auto; }
+.gj-note { margin: 0; }
+.gj-back { display: flex; justify-content: center; }
+.gj-confirm {
+  display: grid; gap: var(--s-1); justify-items: center; text-align: center;
+  padding: var(--s-5) var(--s-4);
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--bg-2);
+}
+.gj-confirm-label {
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--muted);
+}
+.gj-confirm-team {
+  font-family: var(--font-display); font-size: var(--fs-h1);
+  font-weight: var(--fw-bold); letter-spacing: var(--ls-tight); text-transform: uppercase;
+}
+.gj-confirm p { margin: var(--s-2) 0 0; }
+
+/* The golf door on the "Who are you?" card. */
+.welcome-alt {
+  margin-top: var(--s-4); padding-top: var(--s-4);
+  border-top: 1px solid var(--line-soft);
+  display: grid; gap: var(--s-2); justify-items: center;
+}
+.welcome-or {
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--muted);
+}
+#welcome-golf { width: 100%; }
+#welcome-golf .ico { width: 18px; height: 18px; }
+
+/* ---------------------------------------------------------------------
+   GOLF NAME - the member's own control on their profile, and the
+   commissioner's row on the event. Plain tokens; a name field is not an
+   occasion.
+   --------------------------------------------------------------------- */
+.golfname-form { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
+.golfname-row { display: flex; gap: var(--s-2); align-items: center; }
+.golfname-row input { flex: 1 1 auto; min-width: 0; }
+.golfname-row .btn { flex: 0 0 auto; }
+.golfname-form p { margin: 0; }
+/* The name, then its buttons, and the name is allowed to shrink. */
+.gname-row { display: flex; align-items: center; gap: var(--s-2); }
+.gname-row .gname { flex: 1 1 auto; min-width: 0; }
+.gname-row .btn { flex: 0 0 auto; }

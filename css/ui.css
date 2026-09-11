@@ -1,0 +1,1040 @@
+/* =====================================================================
+   ui.css - the components, built on the tokens
+   ---------------------------------------------------------------------
+   Loaded AFTER style.css so it wins, and scoped to the classes the app
+   already uses. That is the whole migration strategy: style.css keeps its
+   layout and its hard-won comments, this file restates the SURFACE of the
+   shared primitives - card, button, badge, table, empty state, shell - so
+   every page inherits the new look without any page being rewritten.
+
+   Nothing here touches colour tokens. js/theme.js rewrites --bg, --text and
+   --muted at runtime to personalise the app to a member's team, so every
+   surface below is expressed in those variables and personalisation keeps
+   working exactly as it did.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   CARDS
+
+   One radius, one padding, one border. There were eleven competing card
+   classes - card, arena-card, duecard, keepcard, rulecard, results-card,
+   subcard, sheet-card, overlay-card, dfl-team-card - each with its own
+   numbers, so nothing lined up with anything next to it.
+   --------------------------------------------------------------------- */
+.card,
+.arena-card, .duecard, .keepcard, .rulecard, .results-card, .bag-card, .gd-card {
+  border-radius: var(--r-lg);
+  border: 1px solid var(--card-border);
+  background: var(--bg-2);
+  box-shadow: var(--card-shadow);
+}
+.card { padding: var(--s-4); margin-bottom: var(--s-3); }
+
+/* The upper-left wash is emphasis, not wallpaper. Identity, a selected
+   state, or a major summary may opt in with .accent; ordinary content stays
+   on a quiet solid surface so the wash keeps meaning something. */
+.card.accent,
+.surface-identity {
+  background: var(--card-surface);
+}
+
+/* A card title is a LABEL, not a heading - small, tracked, quiet - so the
+   number or the name underneath is the thing the eye lands on. */
+.card-title {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.card-heading {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-bold);
+  letter-spacing: .025em;
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------
+   PAGE + SECTION HEADS
+   --------------------------------------------------------------------- */
+h1, .page-head h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  text-transform: uppercase;
+}
+h2, h3 { font-family: var(--font-display); letter-spacing: var(--ls-tight); }
+.section-title {
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-caps);
+  margin: var(--s-7) 0 var(--s-3);
+}
+
+/* ---------------------------------------------------------------------
+   BUTTONS
+
+   Three jobs and one shape: primary is filled with the crest red, ghost is
+   a hairline, danger is unmistakable. 44px minimum, because the app is used
+   one-handed on a golf course.
+   --------------------------------------------------------------------- */
+.btn {
+  min-height: 44px;
+  border-radius: var(--r-control);
+  padding: 0 var(--s-4);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  transition: filter var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.btn.small { min-height: 38px; padding: 0 var(--s-3); font-size: var(--fs-label); }
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: scale(.97); }
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--control-line);
+  color: var(--text);
+}
+.btn.ghost:hover { background: var(--hover); }
+.btn.danger, .btn.ghost.danger {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  color: var(--danger-ink);
+}
+
+/* ---------------------------------------------------------------------
+   BADGES
+
+   One vocabulary for status, so WIN, FINAL, PAID and CHAMPION all look
+   like the same kind of thing. Brand colour is semantic here, never
+   decorative: red for a loss or a debt, green for a win or a payment.
+   --------------------------------------------------------------------- */
+.badge, .pill.green, .pill.warn, .pill.red, .pill.grey, .admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 3px var(--s-2);
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.badge.win, .badge.paid, .badge.champion, .pill.green {
+  background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok);
+}
+.badge.loss, .badge.unpaid, .pill.red {
+  background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger-ink);
+}
+.badge.open, .badge.playoff, .pill.warn {
+  background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink);
+}
+.badge.closed, .badge.final, .pill.grey {
+  background: var(--bg-3); border-color: var(--line); color: var(--muted);
+}
+.badge.admin, .admin-badge {
+  background: transparent; border-color: var(--line); color: var(--accent-2);
+}
+/* LIVE earns the only animated badge in the app, because it is the only one
+   that means "this number is changing while you look at it". */
+.badge.live {
+  background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger-ink);
+}
+.badge.live::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-fill);
+  animation: dfl-pulse 1.8s var(--ease) infinite;
+}
+@keyframes dfl-pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+
+/* ---------------------------------------------------------------------
+   STATS - the reason the type scale has a second ramp
+
+   A figure and its label. The figure is condensed, tabular and big; the
+   label is small and quiet. Put them together and the hierarchy reads
+   before anybody has parsed a word.
+   --------------------------------------------------------------------- */
+.stat { display: grid; gap: 2px; }
+.stat > b {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+}
+.stat > small {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.statrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: var(--s-3); }
+
+/* The existing figure blocks join the same system rather than keeping their
+   own sizes. */
+.sf-v, .setup-figure .sf-v {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-sm);
+  font-variant-numeric: tabular-nums;
+}
+.sf-l { font-size: var(--fs-micro); letter-spacing: var(--ls-caps); }
+
+/* ---------------------------------------------------------------------
+   TABLES - sports information, not a spreadsheet
+   --------------------------------------------------------------------- */
+.tbl { font-size: var(--fs-body); }
+.tbl th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--bg-2);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  color: var(--muted);
+  padding: var(--s-2);
+}
+.tbl td { padding: var(--s-3) var(--s-2); }
+.tbl tbody tr:hover { background: var(--hover-soft); }
+/* Every figure in a table is tabular and right-aligned, so columns of
+   numbers read as columns instead of as ragged text. */
+.tbl td.num, .tbl th.num, .tbl .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+}
+.tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ---------------------------------------------------------------------
+   STATES - loading, empty, error, offline
+
+   These were a grey box with the word "Loading…" in it. A state is part of
+   the product: it should look designed, say what is happening, and never
+   look like a browser default.
+   --------------------------------------------------------------------- */
+.empty, .state {
+  display: grid;
+  place-items: center;
+  gap: var(--s-2);
+  padding: var(--s-7) var(--s-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-lg);
+  background: var(--hover-soft);
+  color: var(--muted);
+  font-size: var(--fs-body);
+  text-align: center;
+}
+.state-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text);
+}
+/* A moving hairline rather than a spinner: it says "working" without
+   putting a cartoon in the middle of a sports app. */
+.state.is-loading { position: relative; overflow: hidden; border-style: solid; }
+.state.is-loading::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 40%;
+  background: linear-gradient(90deg, transparent, var(--hover), transparent);
+  animation: dfl-sweep 1.1s var(--ease) infinite;
+}
+@keyframes dfl-sweep { from { transform: translateX(-100%) } to { transform: translateX(350%) } }
+
+/* ---------------------------------------------------------------------
+   THE SHELL
+
+   The bar at the top and the bar at the bottom are on every screen, so
+   they carry more of the "is this a real app" feeling than any page does.
+   --------------------------------------------------------------------- */
+.topbar-inner { gap: var(--s-3); }
+/* The mark, small. The full crest belongs on the splash and nowhere else in
+   the chrome - a logo on every screen stops registering as a brand and
+   starts being furniture. */
+.brand-mark {
+  width: 30px; height: 30px; flex: 0 0 30px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+}
+.brand-text { font-size: var(--fs-h1); letter-spacing: var(--ls-caps); }
+.brand-text .creed { letter-spacing: .06em; }
+
+/* The nav bar follows the palette: a raised surface a shade off the page in
+   both modes, with its ink and its glyphs following it (profile-neutral.css).
+   The TOP bar still keeps the crest's black banner - see "CHROME" in
+   style.css - because that one is the wordmark's own background. */
+.tabbar { background: color-mix(in srgb, var(--bg-2) 94%, var(--bg)); backdrop-filter: blur(8px); }
+.tabbar :is(a, .tabmore) {
+  min-height: 52px;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  transition: color var(--t-fast) var(--ease);
+}
+/* The active tab is marked at the TOP edge, above the icon: a line under a
+   label competes with the home-screen indicator on a phone. */
+.tabbar :is(a, .tabmore).on { position: relative; }
+.tabbar :is(a, .tabmore).on::before {
+  content: ""; position: absolute; top: 0; left: 22%; right: 22%; height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--accent-sweep);
+}
+
+.sheet-card { border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.sheet-head strong { font-family: var(--font-display); letter-spacing: var(--ls-wide); text-transform: uppercase; }
+.quicknav a { border-radius: var(--r-md); transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.quicknav a:active { transform: scale(.97); }
+
+/* ---------------------------------------------------------------------
+   THE OPENING
+
+   Not a loading screen, and the distinction is the whole point: the app is
+   already booting underneath this, every module is already being fetched,
+   and nothing here waits on a request. It COVERS the app for about a second
+   and a half and then removes itself. If it were a loading screen it would
+   have a spinner, and it does not.
+
+   The sequence, and the delays are the design:
+
+     0.00  black
+     0.20  the crest fades up
+     0.50  DFL HQ
+     0.80  one pass of light across the plate
+     1.00  the tagline
+     1.60  the whole thing fades out, gone by ~1.85
+
+   Every stage is one CSS animation with a delay. No library, no JS timeline,
+   nothing to keep in step with anything else. `is-running` is added by the
+   inline script so a skipped launch never animates at all.
+   --------------------------------------------------------------------- */
+/*
+  THE GROUND IS THE DEFAULT THEME'S, frozen.
+
+  It was #07090d with #f5f7fa/#8b98ab inks - a cool blue-grey left over from
+  before the app had a house style, so the front door was the one surface that
+  did not look like the app behind it. These are Medicine Wheel's own values
+  now, the same set the shared golf cards were moved onto:
+
+    #0b0b0c ground   #f4f2ee ink   #a8a096 muted
+    #F08279 accent   #EFC94C season gold
+
+  Still literals, and for the reason spelled out further down: this plate does
+  not follow the runtime theme, so it must not use the theme's inks.
+
+  DEPTH, not decoration. A flat rectangle reads as a loading screen. Two soft
+  radials - a cool key from above, a warm floor - plus a vignette give the
+  sense of a lit room with no moving parts at all. HQ used to get nothing here
+  while only the broadcast opening had a wash.
+*/
+#splash {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(244,242,238,.07), transparent 62%),
+    radial-gradient(90% 60% at 50% 108%, rgba(239,201,76,.05), transparent 70%),
+    #0b0b0c;
+  /* The plate itself does not move. Only its contents arrive, which is what
+     keeps this feeling like a title card rather than a transition. */
+}
+/* The vignette, on a pseudo-element so it sits over the gradients and under
+   the lockup. No asset, and it is what stops the corners reading as flat. */
+#splash::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(100% 75% at 50% 45%, transparent 48%, rgba(0,0,0,.55));
+}
+#splash .sp-inner { position: relative; z-index: 1; }
+#splash.is-gone { display: none; }
+#splash.is-full.is-running  { animation: dfl-splash-out var(--t-slow) var(--ease) 1.6s forwards; }
+#splash.is-short.is-running { animation: dfl-splash-out 200ms var(--ease) .55s forwards; }
+
+.sp-inner {
+  display: grid; justify-items: center; gap: var(--s-4);
+  padding: var(--s-6);
+  text-align: center;
+}
+/* Reserved before anything animates, so no stage can shift the one after it. */
+.sp-mark { width: min(66vw, 380px); height: auto; opacity: 0; border-radius: 50%; }
+/*
+  FIXED INKS, NOT THE THEME'S - the same rule the shared cards already
+  follow, and for the same reason.
+
+  This plate is #07090d whatever mode the app is in, but --chalk, --muted
+  and --accent all flip with the theme. In light mode --chalk is #11161d,
+  so the wordmark was near-black on near-black: the opening's headline was
+  INVISIBLE for anybody running light mode. --accent went to #B8001B on the
+  same ground, about 2.2:1, which is not much better.
+
+  A surface that does not follow the theme must not use the theme's inks.
+  These are the dark-mode values, stated once, so the opening looks the same
+  for everybody - which is what a title card is for.
+*/
+.sp-word {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: #f4f2ee;
+  opacity: 0;
+}
+.sp-tag {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #a8a096;
+  max-width: 24ch;
+  opacity: 0;
+}
+/*
+  THE SEASON LINE and the rule under the wordmark: the two pieces of structure
+  that separate a title card from a logo on a background. Both quiet, and the
+  rule is 1px - a broadcast plate is built out of hairlines, not boxes.
+*/
+.sp-season {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: #EFC94C;
+  opacity: 0;
+}
+/* No season, no gap: an empty span would still hold a row of the grid. */
+.sp-season:empty { display: none; }
+.sp-rule {
+  width: min(52vw, 300px); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(244,242,238,.28), transparent);
+  opacity: 0;
+}
+
+/* One pass of light, once. A sweep that repeats is a loading bar. */
+.sp-sweep {
+  position: absolute; inset: 0 auto 0 0; width: 42%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+  transform: translateX(-120%);
+}
+/* The season line lands just before the wordmark so the two read as one
+   lockup rather than two arrivals; the rule is struck after both. The plate
+   still leaves at 1.6s, so no stage was pushed later to fit these in. */
+#splash.is-full.is-running .sp-mark   { animation: dfl-sp-rise 620ms var(--ease) .2s both; }
+#splash.is-full.is-running .sp-season { animation: dfl-sp-rise 420ms var(--ease) .44s both; }
+#splash.is-full.is-running .sp-word   { animation: dfl-sp-rise 520ms var(--ease) .54s both; }
+#splash.is-full.is-running .sp-rule   { animation: dfl-sp-wipe 560ms var(--ease) .82s both; }
+#splash.is-full.is-running .sp-tag    { animation: dfl-sp-rise 520ms var(--ease) 1s both; }
+#splash.is-full.is-running .sp-sweep  { animation: dfl-sp-sweep 900ms var(--ease) .8s 1 forwards; }
+
+/*
+  THE SHORT ONE. Same elements, same keyframes, one stage instead of four:
+  crest and wordmark together, no sweep, no tagline, gone by ~0.75s. A
+  second visit in a day should feel like the app opening, not like being
+  introduced to it again.
+*/
+#splash.is-short .sp-tag,
+#splash.is-short .sp-season,
+#splash.is-short .sp-rule,
+#splash.is-short .sp-sweep { display: none; }
+#splash.is-short.is-running .sp-mark { animation: dfl-sp-rise 300ms var(--ease) .05s both; }
+#splash.is-short.is-running .sp-word { animation: dfl-sp-rise 300ms var(--ease) .15s both; }
+#splash.is-short .sp-mark { width: min(46vw, 260px); }
+
+/*
+  THE THREE OPENINGS ARE ONE ANIMATION AND THREE ACCENTS.
+
+  Nothing about the timeline changes between them - same keyframes, same
+  delays, same elements. What changes is a colour and two strings, which is
+  the whole point of doing it this way rather than writing three of these.
+*/
+#splash.is-golf .sp-tag { color: #F08279; }
+/* Broadcast is the loud one: the tagline takes the crest red at size and
+   the plate carries a faint red wash, because MAIN EVENT should not look
+   like a subtitle. */
+#splash.is-broadcast {
+  background:
+    radial-gradient(90% 60% at 50% 45%, rgba(200,16,46,.20), transparent 70%),
+    radial-gradient(120% 80% at 50% -10%, rgba(244,242,238,.05), transparent 62%),
+    #0b0b0c;
+}
+#splash.is-broadcast .sp-tag {
+  color: #F08279;
+  font-size: var(--fs-h3);
+  letter-spacing: .28em;
+}
+
+@keyframes dfl-sp-rise {
+  from { opacity: 0; transform: translateY(8px) scale(.985) }
+  to   { opacity: 1; transform: none }
+}
+@keyframes dfl-sp-sweep { to { transform: translateX(320%) } }
+/* The rule draws out from the middle rather than fading in - it is the one
+   element whose arrival should read as a line being struck. */
+@keyframes dfl-sp-wipe { from { opacity: 0; transform: scaleX(.2) } to { opacity: 1; transform: none } }
+@keyframes dfl-splash-out { to { opacity: 0; visibility: hidden } }
+
+/*
+  REDUCED MOTION. The plate, the words, no movement, and it leaves quickly -
+  somebody who has asked for less motion has not asked for a slower app.
+*/
+@media (prefers-reduced-motion: reduce) {
+  /* No movement and no staging: the whole plate, complete, then it leaves.
+     Somebody who asked for less motion did not ask for a slower app, so the
+     full opening collapses to roughly the length of the short one. */
+  #splash.is-running { animation: dfl-splash-out 160ms linear .55s forwards !important; }
+  #splash.is-running .sp-mark,
+  #splash.is-running .sp-word,
+  #splash.is-running .sp-season,
+  #splash.is-running .sp-rule,
+  #splash.is-running .sp-tag { animation: none !important; opacity: 1; transform: none; }
+  #splash .sp-sweep { display: none; }
+}
+
+/*
+  THE ROOM GETS BIGGER; THE LOCKUP IS NOT JUST STRETCHED.
+
+  A phone needs the crest to leave room for the words beneath it. A desktop has
+  room to let the plate breathe, so the crest grows, the tracking opens and the
+  gaps carry it. A landscape phone has neither - 375px of height with a 66vw
+  crest pushes the tagline off the plate - so there the crest is sized off the
+  HEIGHT instead, and the rule steps out of the way.
+*/
+@media (min-width: 900px) {
+  .sp-inner  { gap: var(--s-5); }
+  .sp-mark   { width: min(38vw, 460px); }
+  .sp-word   { letter-spacing: .42em; }
+  .sp-rule   { width: min(30vw, 380px); }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .sp-inner { gap: var(--s-2); padding: var(--s-3); }
+  .sp-mark  { width: auto; height: min(38vh, 150px); }
+  .sp-word  { font-size: var(--fs-h3); letter-spacing: .28em; }
+  .sp-rule  { display: none; }
+  #splash.is-short .sp-mark { width: auto; height: min(30vh, 120px); }
+}
+/* 360px and under: .34em of tracking is a lot of width for a wordmark. */
+@media (max-width: 360px) {
+  .sp-word   { letter-spacing: .22em; }
+  .sp-season { letter-spacing: .24em; }
+}
+
+/* ---------------------------------------------------------------------
+   PAGE ENTRANCE - one short fade, on the view only, so navigating feels
+   like a response rather than a repaint.
+   --------------------------------------------------------------------- */
+.view > * { animation: dfl-rise var(--t-slow) var(--ease) both; }
+@keyframes dfl-rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+
+/* ---------------------------------------------------------------------
+   THE FRONT PAGE
+   --------------------------------------------------------------------- */
+.fp-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(120% 90% at 50% -20%, var(--hero-wash), transparent 60%),
+    linear-gradient(180deg, var(--hero-a), var(--bg-2));
+  padding: var(--s-5) var(--s-4);
+  margin-bottom: var(--s-3);
+  box-shadow: var(--e-2);
+}
+.fp-kicker {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--accent-2);
+  margin-bottom: var(--s-3);
+}
+.fp-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  text-transform: uppercase;
+  margin: 0;
+}
+.fp-sub { margin: var(--s-1) 0 0; font-size: var(--fs-label); color: var(--muted); }
+
+/* The score band: two sides, big figures, the leader unmistakable. */
+.fp-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s-3); margin: var(--s-5) 0 var(--s-2); }
+.fp-side { display: grid; gap: var(--s-1); justify-items: center; text-align: center; min-width: 0; }
+.fp-side b {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--racer, var(--text));
+}
+.fp-side span {
+  font-size: var(--fs-label); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide); text-transform: uppercase;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fp-side.is-down b, .fp-side.is-down span { opacity: .55; }
+.fp-vs { font-size: var(--fs-label); font-weight: var(--fw-bold); color: var(--muted); }
+.fp-state {
+  margin-top: var(--s-3); padding-top: var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  display: flex; align-items: center; justify-content: center; gap: var(--s-2);
+  font-size: var(--fs-label); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide); text-transform: uppercase;
+}
+/* THE HERO'S CTA IS A BUTTON WEARING A LINK'S CLOTHES. It was 17px tall -
+   the height of its own text - which is the primary action on the front page
+   sitting at a third of the minimum tap target. The padding grows the target
+   to ~45px and the margin gives back exactly what the padding adds, so the
+   text does not move a pixel. */
+.fp-cta {
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  padding: 14px 0;
+  margin-top: 2px;
+  font-size: var(--fs-label); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide); text-transform: uppercase;
+  color: var(--accent); text-decoration: none;
+}
+
+/* The snapshot: four figures that answer "what is happening" at a glance. */
+.fp-snap {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: var(--s-3);
+}
+.fp-snap > a, .fp-snap > div {
+  background: var(--bg-2); padding: var(--s-3) var(--s-4);
+  display: grid; gap: 2px; text-decoration: none; color: inherit;
+  transition: background var(--t-fast) var(--ease);
+}
+.fp-snap > a:hover { background: var(--bg-3); }
+.fp-snap b {
+  font-family: var(--font-display); font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold); line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fp-snap small {
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--muted);
+}
+@media (min-width: 640px) { .fp-snap { grid-template-columns: repeat(4, 1fr); } }
+
+/* Announcements as news, not rows. */
+.fp-news { display: grid; gap: var(--s-2); }
+.fp-news article {
+  border: 1px solid var(--line); border-left: 2px solid var(--accent-fill);
+  border-radius: var(--r-md); background: var(--bg-2);
+  padding: var(--s-3) var(--s-4);
+}
+.fp-news h4 {
+  margin: 0 0 2px; font-family: var(--font-display);
+  font-size: var(--fs-h3); font-weight: var(--fw-bold); letter-spacing: var(--ls-tight);
+}
+.fp-news p { margin: 0; font-size: var(--fs-body); color: var(--body-text); }
+.fp-news time { font-size: var(--fs-micro); color: var(--muted); letter-spacing: var(--ls-wide); text-transform: uppercase; }
+
+/* ---------------------------------------------------------------------
+   Touch targets. Several controls were 30px against a 44px minimum.
+   --------------------------------------------------------------------- */
+.linkbtn { min-height: 32px; }
+select, input[type="text"], input[type="number"], input[type="date"], textarea {
+  min-height: 42px; border-radius: var(--r-control);
+}
+
+/* =====================================================================
+   POLISH PASS - less card, more editorial
+   ---------------------------------------------------------------------
+   The app had reached the point where everything lived in a rounded box,
+   including single rows of text, so the boxes stopped meaning anything. A
+   card should mean "these things belong together and are separate from
+   what is around them". Where a list is just a list, it gets dividers.
+   ===================================================================== */
+
+/* Stacked cards lose their shadow: twelve floating panels down a phone
+   screen reads as clutter, not depth. Depth is for things that genuinely
+   sit above the page - the sheet, the toast, the hero. */
+.card, .arena-card, .duecard, .keepcard, .rulecard, .results-card, .bag-card, .gd-card { box-shadow: var(--card-shadow); }
+.fp-hero { box-shadow: none; }
+.sheet-card, .overlay-card, .toast { box-shadow: var(--e-3); }
+
+/* An event or a poll in a list is a ROW, not a panel. Hairline between,
+   nothing around. */
+.block .card.event, .block .card.linkcard {
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  box-shadow: var(--card-shadow);
+  margin: 0 0 var(--s-3);
+  padding: var(--s-4);
+}
+.block .card.event:first-of-type, .block .card.linkcard:first-of-type { border-top: 1px solid var(--card-border); }
+.block .card.linkcard { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+.event-when { display: flex; align-items: center; gap: var(--s-2); margin-bottom: 2px; }
+.event-date { font-size: var(--fs-micro); font-weight: var(--fw-bold); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--muted); }
+
+/* News, editorially: a rule on the left of the LATEST item only, so the eye
+   knows where to start, and dividers after that. */
+.fp-news { gap: 0; }
+.fp-news article {
+  border: 0; border-radius: 0; background: transparent;
+  border-top: 1px solid var(--line-soft);
+  padding: var(--s-4) 0 var(--s-4) var(--s-3);
+}
+.fp-news article:first-child { border-top: 0; border-left: 2px solid var(--accent-fill); }
+.fp-news h4 { font-size: var(--fs-h2); }
+
+/* ---------------------------------------------------------------------
+   HOME - one story, told loudly
+   --------------------------------------------------------------------- */
+.fp-hero { padding: var(--s-6) var(--s-4) var(--s-5); border-width: 0 0 1px 0; border-radius: 0; margin: 0 calc(var(--s-4) * -1) var(--s-5); }
+.fp-title { font-size: var(--fs-display); }
+/* The hero score is the single biggest thing in the app, on purpose. */
+.fp-side b { font-size: var(--fs-stat-xl); }
+.fp-side span { font-size: var(--fs-h3); }
+.fp-state { font-size: var(--fs-h3); letter-spacing: var(--ls-wide); }
+.fp-kicker { font-size: var(--fs-label); }
+
+/* The snapshot is a strip of figures, not four more boxes. */
+.fp-snap { border-left: 0; border-right: 0; border-radius: 0; margin: 0 calc(var(--s-4) * -1) var(--s-5); }
+.fp-snap b { font-size: var(--fs-h2); }
+
+/* Everything below the hero is deliberately quieter. */
+.creed-doors { margin-bottom: var(--s-6); }
+.block { margin-bottom: var(--s-7); }
+.version-line { margin-top: var(--s-7); font-size: var(--fs-micro); color: var(--muted); }
+
+/* The identity block at the foot of home stops being a hero and becomes a
+   sign-off. */
+#home-wrap .hero { border: 0; background: none; padding: var(--s-6) 0 0; border-top: 1px solid var(--line-soft); }
+#home-wrap .hero-crest { width: 96px; }
+#home-wrap .hero-creed { font-size: var(--fs-label); }
+
+/* ---------------------------------------------------------------------
+   STANDINGS + TABLES - scannable in one pass
+   --------------------------------------------------------------------- */
+.tbl tbody tr:first-child td { background: var(--hover-soft); }
+.tbl td:first-child { font-family: var(--font-display); font-weight: var(--fw-bold); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tbl tbody tr:first-child td:first-child { color: var(--accent-2); }
+
+/* ---------------------------------------------------------------------
+   RECORDS - a championship is not an ordinary row
+   --------------------------------------------------------------------- */
+.rec-val { font-size: var(--fs-stat-lg); }
+.card.accent { border-left-width: 3px; }
+/* The title row in the record book, given the weight a title deserves. */
+.recbook .rec:first-child .rec-val { color: var(--milestone); }
+.badge.champion, .pill.green.champion { border-color: var(--milestone); color: var(--milestone); background: rgba(214,178,84,.12); }
+
+/* ---------------------------------------------------------------------
+   GOLF - a live tournament board
+   --------------------------------------------------------------------- */
+.golf-points-grid { padding: var(--s-5) var(--s-4); }
+.gp-team span { font-size: var(--fs-stat-lg); }
+/* Leading the board is no longer "happens to be the first row": .gl-row
+   .is-leader in css/golf.css is only set when somebody has actually played
+   a hole, so the emphasis lives there with the rest of that row's ramp. */
+.gb-row:hover { background: var(--hover-soft); }
+/* The round card header carries the state, so it reads as a board rather
+   than a list of links. */
+.gr-head { padding: var(--s-3) var(--s-4); }
+.golf-round, .golf-points { box-shadow: none; }
+
+/* ---------------------------------------------------------------------
+   BUTTONS - one primary per row
+
+   A row of four filled red buttons has no hierarchy at all. Inside an
+   admin control row only the FIRST filled button keeps the fill; the rest
+   fall back to the hairline treatment.
+   --------------------------------------------------------------------- */
+.arena-admin .btn:not(.ghost):not(.danger) ~ .btn:not(.ghost):not(.danger),
+.golf-generator .btn:not(.ghost):not(.danger) ~ .btn:not(.ghost):not(.danger),
+.gt-add .btn:not(.ghost):not(.danger) ~ .btn:not(.ghost):not(.danger) {
+  background: transparent;
+  border: 1px solid var(--control-line);
+  color: var(--text);
+}
+.arena-admin, .golf-generator { gap: var(--s-2); }
+
+/* ---------------------------------------------------------------------
+   STATES - one language everywhere, including offline
+   --------------------------------------------------------------------- */
+.state, .empty { gap: var(--s-1); }
+.state-title, .empty { letter-spacing: var(--ls-wide); }
+.state.is-offline { border-color: var(--warn-line); color: var(--warn-ink); }
+
+/*
+  A FAILURE IS A STATE TOO, and it was the one still being drawn with a
+  style="" attribute full of hex codes in ui.js - two colours that existed
+  nowhere else in the app and so drifted from the danger tokens the badges
+  and buttons use. Same shape as the others, solid rather than dashed
+  because something has actually gone wrong.
+*/
+.state.is-error {
+  border-style: solid;
+  border-color: var(--danger-line);
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+}
+.state.is-error .state-title { color: var(--danger-ink); }
+
+/* ---------------------------------------------------------------------
+   THE ANNIVERSARY BANNER
+
+   Full-bleed, gold, and the first thing on the page in a decade season.
+   The sheen is one slow pass - enough to catch the eye once as the page
+   settles, not a marquee. It is also the only gold in the app, which is
+   what makes it read as an occasion rather than as another accent.
+   --------------------------------------------------------------------- */
+.dfl-anniv {
+  position: relative;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: var(--s-3);
+  margin: 0 calc(var(--s-4) * -1) var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid color-mix(in srgb, var(--milestone) 55%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--milestone) 55%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--milestone) 16%, transparent),
+      color-mix(in srgb, var(--milestone) 6%, transparent));
+}
+.dfl-anniv-text {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-bold);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--milestone);
+  text-align: center;
+}
+.dfl-anniv-star { color: var(--milestone); font-size: var(--fs-label); opacity: .8; }
+/* The shine: a single pass of light across the band, then still. */
+.dfl-anniv::after {
+  content: "";
+  position: absolute; inset: 0 auto 0 0; width: 45%;
+  background: linear-gradient(90deg, transparent,
+    color-mix(in srgb, var(--milestone) 26%, transparent), transparent);
+  transform: translateX(-120%);
+  animation: dfl-shine 2.4s var(--ease) .5s 1 forwards;
+}
+@keyframes dfl-shine { to { transform: translateX(320%) } }
+@media (prefers-reduced-motion: reduce) { .dfl-anniv::after { display: none } }
+
+/* The crest at the foot of home was shrunk too far in the polish pass - it
+   is the identity block, so it should be legible artwork, not a favicon. */
+#home-wrap .hero-crest { width: 232px; max-width: 64vw; }
+
+/* =====================================================================
+   THE DFL WATERMARK - one utility, used everywhere.
+   ---------------------------------------------------------------------
+   Add `dfl-mark` to any positioned container and the crest sits behind
+   its content, oversized and bled off the right edge. That is the whole
+   feature: a logo centred and small is a watermark on a document, a logo
+   cropped by the frame is a broadcast.
+
+   WHY A UTILITY AND NOT A COPY PER CARD. It is on the golf tournament
+   card, the match card, the scorecard, the fun fact and the Arena track.
+   Five hand-rolled copies would drift in opacity and position the first
+   time one of them was adjusted, and the brief asked for exactly one
+   asset reused rather than an upload per card.
+
+   IT USES ::after, NOT ::before. Several of these cards already spend
+   ::before on an accent rule, and quietly stealing it would delete their
+   existing top edge.
+
+   LIGHT MODE IS NOT AN AFTERTHOUGHT. mark-512.webp is a light-on-dark
+   asset, so on a light card it is inverted rather than merely faded -
+   fading a white mark on white paper just deletes it.
+   ===================================================================== */
+.dfl-mark { position: relative; isolation: isolate; overflow: hidden; }
+.dfl-mark::after {
+  content: "";
+  position: absolute;
+  top: 50%; right: -14%;
+  width: 62%; aspect-ratio: 1 / 1;
+  transform: translateY(-50%);
+  background: #000 url("../icons/dfl-seal-heritage-512.webp") center / contain no-repeat;
+  border-radius: 50%;
+  opacity: .07;
+  pointer-events: none;                 /* never interactive, ever */
+  z-index: 0;
+}
+/* Content sits above the mark without every card needing its own rule. */
+.dfl-mark > * { position: relative; z-index: 1; }
+
+/* Inverted and slightly stronger on a light ground, where a faint white
+   mark would be invisible. */
+:root:is([data-mode="light"],[data-mode="fairway"]) .dfl-mark::after { filter: invert(1) brightness(.4); opacity: .10; }
+
+/* Over artwork or a photograph there is already plenty going on. */
+.dfl-mark.on-image::after { opacity: .05; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Nothing moves. Stated so nobody adds a drift later and calls it a
+     brand animation - this is furniture. */
+}
+
+
+/* =====================================================================
+   IMAGE FIELD - "choose a picture" wherever a form used to ask for a URL.
+   ---------------------------------------------------------------------
+   js/image-field.js draws this. Four places use it: the Members form's four
+   picture columns, a broadcast slide's backdrop, and the running-order
+   override editor.
+
+   The thumbnail is a FIXED BOX with object-fit, not an auto-sized image. An
+   avatar and a 720px stage backdrop go through the same control, and letting
+   the preview size itself meant the form's layout jumped by 300px depending on
+   which picture somebody happened to pick.
+   ===================================================================== */
+
+.imgf { margin-bottom: 4px; }
+.imgf-row { display: flex; align-items: flex-start; gap: 12px; }
+
+.imgf-thumb {
+  flex: 0 0 auto;
+  width: 76px; height: 76px;
+  display: grid; place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--bg-3);
+}
+.imgf-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.imgf-thumb.is-empty { border-style: dashed; }
+.imgf-none {
+  font-size: var(--fs-micro);
+  color: var(--muted);
+  text-align: center;
+  padding: 0 6px;
+}
+
+.imgf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+/* The file input lives inside the label, so the label IS the button - one
+   element, no click forwarding, and it works from the keyboard for free. */
+.imgf-pick { cursor: pointer; }
+.imgf-actions .muted { flex: 1 1 100%; }
+
+/* The pasted link stays available and stays out of the way: a <details> that is
+   closed by default, because picking a file is the answer nine times in ten. */
+.imgf-url summary { cursor: pointer; margin-top: 8px; }
+.imgf-url input { margin-top: 6px; }
+.imgf-hint { margin-top: 6px; }
+
+/* =====================================================================
+   THE CROP SURFACE - a picture you drag, not a setting you pick.
+   ---------------------------------------------------------------------
+   A broadcast slide and a Wall post grow this (see `framing` in
+   js/image-field.js); the avatar picker is untouched.
+
+   THE PREVIEW IS 16/9 AND THE STAGE IS NOT. The real stage is 52svh of
+   full-bleed width, so its shape depends on the phone holding it - there is
+   no one aspect this could match. What the crop tool decides is WHICH PART of
+   the picture survives, and that is stored as a percentage rather than a pixel
+   offset precisely so it means the same thing on every shape. The exact
+   composition is on the Running order above, drawn by the real renderer.
+
+   touch-action:none IS LOAD-BEARING. Without it a phone claims the first
+   finger for scrolling the admin page and the drag never starts.
+   ===================================================================== */
+
+.imgf-frame { margin-top: 12px; }
+.imgf-frame[hidden] { display: none; }
+
+.imgf-frame-top {
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: 8px;
+  margin-bottom: 6px;
+}
+.imgf-frame-title { font-size: var(--fs-micro); color: var(--muted); }
+
+.imgf-fits { display: flex; gap: 0; }
+.imgf-fit {
+  font: inherit; font-size: var(--fs-micro);
+  padding: 5px 10px;
+  color: var(--muted);
+  background: var(--bg-3);
+  border: 1px solid var(--control-line);
+  cursor: pointer;
+}
+.imgf-fit:first-child { border-radius: var(--r-sm) 0 0 var(--r-sm); }
+.imgf-fit:last-child  { border-radius: 0 var(--r-sm) var(--r-sm) 0; border-left: 0; }
+.imgf-fit.is-on { color: var(--chalk); background: var(--accent); border-color: var(--accent); }
+
+.imgf-frame-stage {
+  position: relative;
+  /* 16/9 unless the caller says otherwise. The Wall renders a post's picture
+     in a known shape and passes that shape in, so its crop tool and its feed
+     are the same box; the broadcast has no one shape to match and keeps the
+     default (see `aspect` in js/image-field.js). */
+  aspect-ratio: var(--imgf-aspect, 16 / 9);
+  overflow: hidden;
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  /* Shows through wherever "Show all of it" letterboxes the picture, so the
+     empty space reads as part of the slide rather than as a broken image. */
+  background: var(--bg-3);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.imgf-frame-stage.is-dragging { cursor: grabbing; }
+/* A picture with nothing to pan - it already fits the frame exactly - says so
+   rather than offering a grab that does nothing. */
+.imgf-frame-stage.is-static { cursor: default; }
+.imgf-frame-stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.imgf-frame-stage img {
+  width: 100%; height: 100%; display: block;
+  pointer-events: none;                 /* the surface handles the gesture */
+  -webkit-user-drag: none;
+}
+
+/*
+  The one affordance. Two crossed arrows in a corner say "this moves" without
+  putting a grid over a photograph somebody is trying to judge.
+*/
+.imgf-frame-grip {
+  position: absolute; right: 8px; bottom: 8px;
+  width: 22px; height: 22px;
+  border-radius: 999px;
+  background: rgba(6,9,13,.55);
+  pointer-events: none;
+  opacity: .9;
+}
+.imgf-frame-grip::before,
+.imgf-frame-grip::after {
+  content: ""; position: absolute; background: rgba(255,255,255,.85);
+}
+.imgf-frame-grip::before { left: 4px; right: 4px; top: 10px; height: 2px; }
+.imgf-frame-grip::after  { top: 4px; bottom: 4px; left: 10px; width: 2px; }
+.imgf-frame-stage.is-static .imgf-frame-grip { display: none; }
+
+.imgf-frame-tools {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 8px;
+}
+.imgf-zoom { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
+.imgf-zoom input[type="range"] { flex: 1 1 auto; min-width: 0; margin: 0; accent-color: var(--accent); }
+.imgf-zoom-mark { color: var(--muted); font-size: var(--fs-micro); line-height: 1; }
+
+.imgf-frame-hint { margin-top: 6px; }

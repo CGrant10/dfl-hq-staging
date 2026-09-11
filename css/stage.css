@@ -1,0 +1,938 @@
+/* =====================================================================
+   stage.css - the DFL Broadcast stage on the front page
+   ---------------------------------------------------------------------
+   Prefix bx-. There are now three things in this app that could be called
+   "broadcast" and they are deliberately kept apart:
+
+     broadcast.css   the 1920x1080 OBS stage for Arena races
+     marquee.css     the fight-card accent layer (mq-)
+     stage.css       THIS - the front page's billboard (bx-)
+
+   FIXED HEIGHT, AND THAT IS THE POINT. Slides carry wildly different
+   amounts of text - a two-word stat next to a three-line announcement -
+   and letting the stage size to its content means the whole page jumps
+   every time it changes. The height is reserved once and every slide
+   lives inside it, so the rotation causes ZERO layout shift.
+
+   52svh in 1.5, down from 62. It was big enough to read as a splash
+   screen you had to get past rather than the top of a page you scroll;
+   the snapshot strip now clears the fold on a phone. svh not vh, because
+   vh on iOS Safari is the height with the toolbar hidden and produces a
+   stage taller than the window.
+
+   THE VISUAL LANGUAGE, and it is deliberately five things and not
+   fifteen. Each appears on SOME slides, never all on one:
+
+     the frame      hairline corner brackets + a top brand rule. Says
+                    "this is a broadcast package" and costs two pseudo
+                    elements.
+     the weave      a very faint 3px grid. Depth without an image.
+     the vignette   darkens the edges so type sits off the background.
+     the crest      the DFL mark, huge and cropped, at low opacity.
+     the sweep      one pass of light when a slide arrives.
+
+   Everything below is built from the existing tokens. The ONE exception
+   is the light background, which pins its inks to fixed values - it is an
+   always-light plate, and --chalk is near-black in light mode, which is
+   the exact bug that made the splash wordmark invisible.
+   ===================================================================== */
+
+.bx-stage {
+  position: relative;
+  overflow: hidden;
+  /* Full-bleed, like the hero it replaces. */
+  margin: 0 calc(var(--s-4) * -1) var(--s-5);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+
+  height: 52svh;
+  min-height: 300px;
+  max-height: 460px;
+
+  /*
+    KIOSK BEHAVIOUR, and only here.
+
+    pan-y hands vertical scrolling to the page and horizontal movement to
+    the swipe handler - which is what stops a sideways drag from fighting
+    the browser. It also means no pinch zoom ON THE STAGE, because
+    pinch-zoom is not in the list. The rest of the app is untouched: the
+    global rule on <html> is `manipulation`, and everything outside this
+    element still gets it.
+  */
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+@supports not (height: 52svh) { .bx-stage { height: 52vh; } }
+
+/* A brand rule across the top: the block reads as a broadcast lower-third
+   rather than as another card. Same device as the marquee. */
+.bx-stage::before {
+  content: "";
+  position: absolute; inset: 0 0 auto 0; height: 3px; z-index: 6;
+  background: var(--accent-sweep);
+}
+
+.bx-layer { position: absolute; inset: 0; }
+
+/* Every slide fills the stage and centres itself, so a two-word stat and a
+   three-line announcement occupy the same box. */
+.bx-slide {
+  position: absolute; inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--s-2);
+  /*
+    THE SIDE PADDING IS THE ARROW'S CLEARANCE, and it has to be measured
+    rather than eyeballed: a 44px arrow tucked 4px from the edge occupies
+    the first 48px, so anything less than that puts the previous/next
+    buttons on top of the headline. It did - at 430px the arrows sat over
+    the scoreboard's team names and over the champion's name.
+
+    Bottom padding clears the control bar the same way.
+  */
+  padding: var(--s-5) 54px calc(var(--s-6) + var(--s-5));
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* =====================================================================
+   BACKGROUNDS - the plate a slide is dressed on.
+   One class, set from broadcast_items.background. 'default' is the house
+   look and is what every automatic slide gets.
+   ===================================================================== */
+
+/* The house look: a wash from the top, the league's own colour.
+   bx-bg-logo shares it - the crest is a LAYER on this plate, not a
+   plate of its own, and without this it had no background whatsoever. */
+.bx-bg-default, .bx-bg-logo {
+  background:
+    radial-gradient(120% 90% at 50% -20%, var(--hero-wash), transparent 60%),
+    linear-gradient(180deg, var(--hero-a), var(--bg-2));
+}
+
+/* Heavier, for a slide that wants to feel like a title card. */
+.bx-bg-dark {
+  background:
+    radial-gradient(90% 70% at 50% 120%, rgba(229, 1, 27, .20), transparent 70%),
+    linear-gradient(180deg, #0a0d12, #05070a);
+  color: #F2F5F8;
+}
+.bx-bg-dark .bx-sub, .bx-bg-dark .bx-body { color: #A9B4C0; }
+
+/*
+  LIGHT. Fixed inks, not tokens - see the header. A light plate exists in
+  every theme, so it cannot borrow --text (near-white in dark mode) or
+  --chalk (near-black in light mode) without being invisible in one of
+  them. Measured: 15.9:1 for the headline on this background.
+*/
+.bx-bg-light {
+  background:
+    radial-gradient(100% 80% at 50% -10%, #FFFFFF, transparent 60%),
+    linear-gradient(180deg, #F4F6F8, #DFE4EA);
+  color: #0C1116;
+}
+.bx-bg-light .bx-kicker  { color: #A8121F; }
+.bx-bg-light .bx-sub,
+.bx-bg-light .bx-body    { color: #444E58; }
+.bx-bg-light .bx-figure,
+.bx-bg-light .bx-name,
+.bx-bg-light .bx-head    { color: #0C1116; }
+.bx-bg-light .bx-when    { color: #333B44; border-color: rgba(0,0,0,.28); }
+.bx-bg-light .bx-statword { color: #5A646E; }
+
+/* =====================================================================
+   THE LAYERS behind the text. All pointer-events:none, all z-index below
+   the slide content, none of them ever more than one image.
+   ===================================================================== */
+
+.bx-fx { position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+
+/* THE WEAVE. A 3px grid at ~3% - visible as texture, never as lines. */
+.bx-weave {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 75%);
+}
+.bx-bg-light .bx-weave {
+  background-image:
+    linear-gradient(rgba(0,0,0,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.05) 1px, transparent 1px);
+}
+
+/* THE VIGNETTE. Type sits off the plate instead of on it. */
+.bx-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(115% 85% at 50% 45%, transparent 45%, rgba(0,0,0,.42) 100%);
+}
+.bx-bg-light .bx-vignette {
+  background: radial-gradient(115% 85% at 50% 45%, transparent 50%, rgba(0,0,0,.16) 100%);
+}
+
+/*
+  THE CREST. Oversized and cropped off the edge, because a logo centred and
+  small is a watermark on a document - a logo bled off the frame is a
+  broadcast. Never on every slide: only the logo background and the
+  champion treatment ask for it.
+*/
+.bx-crest {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 150%; max-width: 720px;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  background: #000 url("../icons/dfl-seal-heritage-512.webp") center / contain no-repeat;
+  border-radius: 50%;
+  opacity: .07;
+}
+.bx-bg-light .bx-crest { opacity: .10; }
+
+/*
+  THE CHIP EATER'S MARK: a toilet, where the champion has the crest.
+
+  Same layer, same size, same opacity - the only difference is the shape, which
+  is the point. The champion slide says "this belongs to the league" with the
+  crest behind the name; the Chip Eater slide says the other thing with the same
+  grammar, at the same volume, instead of shouting it in the copy.
+
+  A MASK, NOT AN IMAGE, and that is what makes it transparent the way the crest
+  is. The crest is a PNG, so light mode has to invert it - and an inverted
+  silhouette is a white blob. Masking a painted box means the shape takes
+  --chalk, the theme's own ink, and needs no filter in either mode: the paint
+  changes with the theme and the shape never does.
+
+  Drawn here as a data URI rather than added to icons/ because it exists only to
+  be a mask - it has no colour, no viewBox anybody else would want, and an
+  <svg> in the sprite sheet would invite somebody to use it as an icon.
+*/
+.bx-crest.is-chip {
+  background: var(--chalk);
+  -webkit-mask: var(--chip-mark) center / contain no-repeat;
+  mask: var(--chip-mark) center / contain no-repeat;
+  opacity: .085;
+}
+:root {
+  /* tank, seat, bowl, pedestal - four shapes, side on. At 8% opacity behind a
+     name the silhouette is all that reads, so it is built from four paths and
+     not forty. */
+  --chip-mark: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Cpath d="M36 7h14a3 3 0 0 1 3 3v16H33V10a3 3 0 0 1 3-3z"/%3E%3Cpath d="M9 26h34a4.5 4.5 0 0 1 0 9H9a4.5 4.5 0 0 1 0-9z"/%3E%3Cpath d="M14 35h24l-4.5 14h-15z"/%3E%3Cpath d="M20 49h13l3.5 9H16z"/%3E%3C/svg%3E');
+}
+/*
+  And no invert on this one. The light-mode rules below flip the crest PNG so a
+  dark mark survives a light plate; a masked shape is already painted in the
+  theme's ink, so inverting it would paint it in the wrong one.
+*/
+:root[data-mode="light"] .bx-crest.is-chip,
+.bx-bg-light .bx-crest.is-chip { filter: none; }
+/* The champion's crest is CENTRED, like every other one. It used to be
+   pushed off to the right on the theory that the name should own the
+   middle - in practice it just read as a misaligned logo, because the
+   name is centred and the mark behind it was not. It sits a little
+   larger and a little stronger instead, which is the ceremony without
+   the crookedness. */
+.is-champion .bx-crest { width: 118%; opacity: .09; }
+
+/*
+  THE CORNER BRACKETS. Four hairline Ls, drawn with one element and two
+  gradients per corner - the cheapest way to say "framed shot".
+*/
+.bx-corners::before, .bx-corners::after {
+  content: "";
+  position: absolute;
+  width: 26px; height: 26px;
+  border: 1px solid var(--accent);
+  opacity: .5;
+}
+.bx-corners::before { top: 10px;    left: 10px;  border-right: 0; border-bottom: 0; }
+.bx-corners::after  { bottom: 10px; right: 10px; border-left: 0;  border-top: 0; }
+
+/* THE SWEEP. One pass of light as a slide arrives, then nothing. */
+.bx-sweep {
+  position: absolute; inset: 0 auto 0 0; width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+  transform: translateX(-140%);
+}
+.bx-slide.bx-in .bx-sweep { animation: bx-sweep 820ms var(--ease) 120ms 1 forwards; }
+@keyframes bx-sweep { to { transform: translateX(340%); } }
+
+/* =====================================================================
+   ARTWORK. The image is composed, not appended.
+   ===================================================================== */
+
+.bx-art {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  /*
+    THE COMMISSIONER'S ZOOM, and it arrives as a custom property rather than as
+    an inline transform because the drift below is an animation and an inline
+    transform would simply lose to it. Everything that scales the artwork
+    multiplies by this instead, so a slide framed in the crop tool is the slide
+    that plays. See artworkStyle() in js/broadcast-artwork.js.
+
+    transform-origin is set inline to the same focal point the picture is
+    positioned on, which is what makes pushing in tighten around the face
+    rather than around the middle of the frame.
+  */
+  transform: scale(var(--bx-zoom, 1));
+  /*
+    The picture sits UNDER the broadcast rather than being the broadcast.
+    At full strength a photograph competes with the headline for the eye
+    and the slide stops reading as a lower-third. Dropping it back lets
+    the stage's own plate show through, which is what keeps a member's
+    photo and a golf scoreboard looking like the same package.
+
+    Taken down twice now - 1.0 to .58 to .42 - because .58 was still
+    carrying the slide rather than sitting behind it. The scrim below does
+    the readability work; this is about hierarchy, not contrast.
+  */
+  opacity: .42;
+  /* A dragged image inside a swipe surface is the classic mobile bug. */
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+.bx-art[style*="object-fit:contain"] {
+  /* Letterboxing is intentional in this mode: the complete artwork is more
+     important than filling every pixel. The dark plate keeps empty bands
+     inside the broadcast package instead of exposing the page behind it. */
+  background: #06090d;
+}
+/*
+  READABILITY IS NOT OPTIONAL. Any photograph can put white text on white
+  sky, so an image background always carries a scrim. It is a gradient
+  rather than a flat wash so the picture still reads at the edges.
+*/
+.bx-scrim {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6,9,13,.55) 0%, rgba(6,9,13,.30) 38%, rgba(6,9,13,.82) 100%);
+}
+.bx-bg-image { color: #F4F7FA; }
+.bx-bg-image .bx-sub, .bx-bg-image .bx-body { color: #C9D2DC; }
+/* Text over a photo needs a shadow as well as a scrim; the scrim handles
+   the average case and this handles the bright patch. */
+.bx-bg-image .bx-name, .bx-bg-image .bx-head, .bx-bg-image .bx-figure {
+  text-shadow: 0 2px 18px rgba(0,0,0,.55);
+}
+
+/* An announcement with artwork puts the picture beside the words on a
+   wide screen, and behind them on a phone - one image, two compositions,
+   no second field. */
+@media (min-width: 720px) {
+  .bx-slide.is-announcement.bx-bg-image { justify-items: start; text-align: left; padding-left: 46%; }
+  .bx-slide.is-announcement.bx-bg-image .bx-art { right: auto; width: 44%; }
+  .bx-slide.is-announcement.bx-bg-image .bx-scrim {
+    background: linear-gradient(90deg, rgba(6,9,13,.15) 0%, rgba(6,9,13,.70) 38%, rgba(6,9,13,.92) 60%);
+  }
+}
+
+/* --------------------------------------------------------- shared parts */
+
+.bx-kicker {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+.bx-kicker .ico-sm { width: 16px; height: 16px; }
+
+/* A hairline under the kicker: broadcast graphics label things, they do
+   not just place text above them. */
+.bx-kicker::after {
+  content: "";
+  width: 18px; height: 1px;
+  background: currentColor;
+  opacity: .55;
+}
+
+.bx-head, .bx-name {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  text-transform: uppercase;
+  max-width: 20ch;
+  text-wrap: balance;
+}
+
+/*
+  ONE LINE, AND THE TYPE SHRINKS TO EARN IT.
+
+  There is deliberately NO rule here for that. fitHeadlines() in
+  broadcast-stage.js writes nowrap, max-width and the measured font-size as
+  inline styles, because the cap it has to beat is .bx-champ .bx-name at 14ch -
+  two classes, which any single-class rule in this file would lose to. The
+  first version of this fix was such a rule, and it silently did nothing.
+
+  What stays here is the max-width above: it is still the right answer for the
+  wrapping fallback, which is what a name too long to shrink goes back to.
+*/
+.bx-name { font-size: clamp(1.85rem, 9vw, 2.6rem); }
+.bx-head { font-size: clamp(1.35rem, 6.4vw, 1.9rem); }
+
+.bx-sub {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bx-body {
+  margin: var(--s-1) 0 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--body-text);
+  max-width: 40ch;
+  /* Long copy is clamped rather than allowed to overflow a fixed stage. */
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/*
+  THE TEMPORAL CHIP - the thing that stops this screen lying.
+
+  Every item making a claim about time carries one. LIVE is the only one
+  that gets the danger colour and the pulse, because it is the only one
+  that means "this number is changing while you look at it".
+*/
+.bx-when {
+  margin-top: var(--s-2);
+  padding: 3px var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-family: var(--font-display);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bx-when.is-live {
+  color: var(--danger-ink);
+  border-color: var(--danger-line);
+  background: var(--danger-bg);
+  display: inline-flex; align-items: center; gap: var(--s-1);
+}
+.bx-when.is-live::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-fill);
+  animation: dfl-pulse 1.8s var(--ease) infinite;
+}
+.bx-when.is-upcoming { color: var(--warn-ink); border-color: var(--warn-line); }
+.bx-when.is-final    { color: var(--text); border-color: var(--control-line); }
+
+/* ------------------------------------------------------------- champion */
+
+.bx-champ { display: grid; justify-items: center; gap: var(--s-2); }
+.bx-champ .bx-kicker { color: var(--milestone); }
+.bx-champ .bx-name {
+  color: var(--chalk);
+  font-size: clamp(2.1rem, 11vw, 3.1rem);
+  max-width: 14ch;
+}
+.bx-bg-light .bx-champ .bx-name { color: #0C1116; }
+/* A rule under the champion's name, weighted gold. Ceremony, one line. */
+.bx-champ .bx-name::after {
+  content: "";
+  display: block;
+  width: 64px; height: 2px;
+  margin: var(--s-3) auto 0;
+  background: linear-gradient(90deg, transparent, var(--milestone), transparent);
+}
+
+/*
+  THE CHIP EATER borrows this whole composition and drops the ceremony.
+
+  Same layout - the slide is still "one name, centred, big" - but the gold rule
+  belongs to a title and coming last is not one. The rule stays, because it is
+  what stops the name floating, and turns muted; the icon is swapped for a medal
+  by the markup rather than here (see champion() in broadcast-stage.js).
+*/
+.bx-champ.is-chip .bx-kicker { color: var(--accent); }
+.bx-champ.is-chip .bx-name::after {
+  background: linear-gradient(90deg, transparent, var(--muted), transparent);
+}
+
+/* ----------------------------------------------------------------- stat */
+
+.bx-stat { display: grid; justify-items: center; gap: 0; }
+.bx-figure {
+  font-family: var(--font-display);
+  font-size: clamp(3.6rem, 22vw, 6rem);
+  font-weight: var(--fw-bold);
+  line-height: .86;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--chalk);
+}
+.bx-statword {
+  margin-top: var(--s-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* -------------------------------------------------------------- the rest */
+
+.bx-note, .bx-event, .bx-hero { display: grid; justify-items: center; gap: var(--s-2); }
+.bx-when-text {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 7vw, 2rem);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--accent);
+}
+/* The hero is the identity floor, so it gets the creed's spacing. */
+.bx-hero .bx-name { max-width: 16ch; }
+
+/* The scoreboard is marquee()'s markup, and it arrives already full-bleed
+   for a card - inside the stage it should sit in the middle instead. */
+.bx-slide .mq-card {
+  margin: 0;
+  border: 0;
+  background: none;
+  width: 100%;
+  padding: 0;
+}
+.bx-slide .mq-card::before { display: none; }
+
+/* =====================================================================
+   ENTRANCE. Broadcast graphics do not fade in as a block - the label
+   arrives, then the name, then the detail. Three delays, one keyframe,
+   and the whole thing is over in under half a second.
+
+   The stagger is CSS, but the ROTATION CLOCK IS NOT - see
+   broadcast-stage.js for why that has to be JS.
+
+   The entrance itself is PRESS, ~380ms, ~490ms with the stagger.
+   ===================================================================== */
+
+/*
+  PRESS, picked from the text reel. The shortest thing in that set: 380ms for
+  the headline, ~490ms including the stagger, against Glitch lock's 520 and the
+  original staggered rise's ~700. That saving is what pays for 3s slides.
+
+  One beat, and the whole idea is in the overshoot. The line arrives slightly
+  TOO BIG and is stamped down through its resting size to a hair under it
+  before settling - which reads as weight landing rather than as something
+  sliding in. Two properties, opacity and scale, and no third idea.
+
+  Scale and not translate, deliberately: a scale has no direction, so the same
+  entrance works on a name, a score, a date and a three-line announcement
+  without one of them looking like it came from the wrong edge. It is also the
+  reason nothing here needs per-letter or windowed markup - the roll entrances
+  in the reel all did, which would have meant the deck rewriting slide HTML.
+*/
+@keyframes bx-press {
+  0%   { opacity: 0; transform: scale(1.16); }
+  62%  { opacity: 1; transform: scale(.988); }
+  100% { transform: none; }
+}
+/*
+  The supporting lines get the same move with the overshoot taken out. A kicker
+  punching in as hard as the headline reads as two headlines arriving; this is
+  the same language, one notch quieter.
+*/
+@keyframes bx-settle {
+  0%   { opacity: 0; transform: scale(1.05); }
+  100% { opacity: 1; transform: none; }
+}
+
+.bx-slide.bx-in .bx-kicker,
+.bx-slide.bx-in .bx-sub,
+.bx-slide.bx-in .bx-statword,
+.bx-slide.bx-in .bx-when-text,
+.bx-slide.bx-in .bx-body,
+.bx-slide.bx-in .bx-when            { animation: bx-settle 320ms var(--ease) both; }
+.bx-slide.bx-in .bx-name,
+.bx-slide.bx-in .bx-head,
+.bx-slide.bx-in .bx-figure          { animation: bx-press 380ms cubic-bezier(.2,1.1,.25,1) both; }
+/* A very short stagger only. Anything longer and the 380ms saving is spent. */
+.bx-slide.bx-in .bx-sub,
+.bx-slide.bx-in .bx-statword,
+.bx-slide.bx-in .bx-when-text       { animation-delay: 70ms; }
+.bx-slide.bx-in .bx-body,
+.bx-slide.bx-in .bx-when            { animation-delay: 110ms; }
+/* The scoreboard's own parts, so a score arrives like a score. */
+.bx-slide.bx-in .mq-billing         { animation: bx-settle 300ms var(--ease) both; }
+.bx-slide.bx-in .mq-tape            { animation: bx-press 380ms cubic-bezier(.2,1.1,.25,1) both; }
+.bx-slide.bx-in .mq-status          { animation: bx-settle 320ms var(--ease) 110ms both; }
+/* Artwork drifts, very slightly, for as long as it is on screen. */
+.bx-slide.bx-in .bx-art             { animation: bx-drift 9s linear both; }
+@keyframes bx-drift {
+  from { transform: scale(calc(var(--bx-zoom, 1) * 1.06)); }
+  to   { transform: scale(calc(var(--bx-zoom, 1) * 1.12)); }
+}
+/*
+  A SLIDE SOMEBODY FRAMED DOES NOT DRIFT.
+
+  The drift is house style on a picture nobody composed - it stops a
+  photograph sitting dead on the plate. But it also pushes in another 6-12%,
+  and on a slide where a commissioner has zoomed to a face and placed it
+  exactly, that is the tool lying about what will play. So the moment the zoom
+  is touched the drift stops and the framing is what is on screen.
+*/
+.bx-slide.bx-in .bx-art.is-framed   { animation: none; }
+
+/*
+  REDUCED MOTION. tokens.css already collapses every duration to ~0, which
+  lands each of the above on its `to` state instantly - content appears,
+  nothing moves. Stated here as well because the sweep and the drift are
+  decoration with no informational job, and they should be gone rather
+  than merely fast.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .bx-sweep, .bx-slide.bx-in .bx-art { animation: none !important; }
+  /* The MOTION goes, not the framing - scale(var(--bx-zoom)) is where the
+     commissioner put the picture, and dropping it would recompose the slide
+     for the people who asked for less movement. */
+  .bx-art { transform: scale(var(--bx-zoom, 1)) !important; }
+  /*
+    And the entrance. Press is a scale overshoot, which is exactly the kind of
+    motion this query exists to remove, and its hardcoded 380ms does not answer
+    to the token durations - so it is switched off here rather than shortened.
+  */
+  .bx-slide.bx-in * { animation-name: none !important; text-shadow: none !important; }
+}
+
+/* =====================================================================
+   CONTROLS
+   ===================================================================== */
+
+.bx-slide {
+  opacity: 1;
+  transition: opacity var(--t-mid) var(--ease);
+}
+.bx-slide.bx-enter { opacity: 0; }
+
+.bx-controls {
+  position: absolute;
+  z-index: 7;
+  left: var(--s-4); right: var(--s-4);
+  bottom: var(--s-3);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* 44px of hit area for an 18px glyph, per the touch-target rule the rest
+   of the app follows. */
+.bx-pause {
+  display: grid;
+  place-items: center;
+  width: 44px; height: 44px;
+  padding: 0;
+  border: 1px solid var(--control-line);
+  border-radius: 50%;
+  background: var(--control-bg);
+  color: var(--text);
+  cursor: pointer;
+  flex: none;
+}
+.bx-pause .ico-sm { width: 16px; height: 16px; }
+/* One button, two glyphs, and the state decides which is real. */
+.bx-pause .bx-i-play { display: none; }
+.bx-pause.is-paused .bx-i-pause { display: none; }
+.bx-pause.is-paused .bx-i-play { display: block; }
+.bx-on-light .bx-pause, .bx-on-light .bx-arrow { background: rgba(255,255,255,.72); color: #0C1116; border-color: rgba(0,0,0,.2); }
+
+/*
+  PROGRESS, NOT DOTS.
+
+  Eight 24px dots plus a button ate 276px of a 375px phone and read as a
+  generic carousel. This is one segment per slide, full width, which says
+  the same thing - where you are, how many there are - in a shape that
+  belongs to a broadcast rather than to a marketing page. They are still
+  real buttons: the 24px target is padding around a 3px bar.
+*/
+.bx-dots { display: flex; align-items: center; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.bx-dot {
+  flex: 1 1 0; min-width: 0;
+  height: 24px;                    /* the target */
+  padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; align-items: center;
+}
+.bx-dot { position: relative; }
+/* The track. */
+.bx-dot::after {
+  content: "";
+  height: 3px; width: 100%;
+  border-radius: 2px;
+  background: var(--control-line);
+  transition: height var(--t-fast) var(--ease);
+}
+.bx-dot.on::after { height: 5px; }
+/*
+  THE FILL, and this is the progress indicator doing an honest job: it
+  ticks across the current segment over exactly that slide's dwell, so the
+  bar answers "how long until the next one" instead of only "which one is
+  this". The duration comes from the engine as --bx-dwell, because dwell
+  is per treatment and per slide - CSS cannot know it.
+
+  It pauses with the broadcast rather than running on behind a paused
+  stage, which would be a progress bar that lies.
+*/
+/* THE DWELL TIMER. A long line that grows, so it runs primary to secondary
+   like every other long line - it was solid primary, which is most of why a
+   team palette looked like one colour on the deck. */
+.bx-dot::before {
+  content: "";
+  position: absolute; left: 0; top: 50%;
+  transform: translateY(-50%);
+  height: 5px; width: 0;
+  border-radius: 2px;
+  background: var(--accent-sweep);
+}
+.bx-dot.on::before { animation: bx-fill var(--bx-dwell, 6000ms) linear both; }
+.bx-stage.is-paused .bx-dot.on::before { animation-play-state: paused; }
+@keyframes bx-fill { from { width: 0; } to { width: 100%; } }
+/* Reduced motion: no crawling bar. The active segment is simply filled. */
+@media (prefers-reduced-motion: reduce) {
+  .bx-dot.on::before { animation: none; width: 100%; }
+}
+.bx-on-light .bx-dot::after { background: rgba(0,0,0,.25); }
+.bx-on-light .bx-dot.on::after { background: var(--accent-fill); }
+
+/*
+  PREVIOUS / NEXT. Edge-anchored and vertically centred, so they never
+  collide with the control bar and never sit on top of the headline.
+
+  Always in the DOM and always focusable - swipe is never the only way to
+  move. On a pointer device they fade up on hover or focus; on touch,
+  where there is no hover, they stay visible because there is nothing to
+  reveal them.
+*/
+.bx-arrow {
+  position: absolute; top: 50%;
+  transform: translateY(-50%);
+  z-index: 7;
+  display: grid; place-items: center;
+  width: 44px; height: 44px;
+  padding: 0;
+  border: 1px solid var(--control-line);
+  border-radius: 50%;
+  background: var(--control-bg);
+  color: var(--text);
+  cursor: pointer;
+  opacity: .55;
+  transition: opacity var(--t-fast) var(--ease);
+}
+.bx-arrow .ico-sm { width: 18px; height: 18px; }
+.bx-prev { left: 4px; }
+.bx-next { right: 4px; }
+.bx-stage:hover .bx-arrow, .bx-arrow:focus-visible { opacity: 1; }
+@media (hover: hover) { .bx-arrow { opacity: 0; } .bx-stage:hover .bx-arrow { opacity: .85; } }
+
+/* ----------------------------------------------------------- wider screens */
+
+@media (min-width: 640px) {
+  /* Same measurement, one step further out. */
+  .bx-slide { padding: var(--s-6) 64px calc(var(--s-7) + var(--s-4)); }
+  .bx-controls { left: var(--s-6); right: var(--s-6); bottom: var(--s-4); }
+  .bx-prev { left: 10px; } .bx-next { right: 10px; }
+  .bx-corners::before, .bx-corners::after { width: 34px; height: 34px; }
+}
+
+/* =====================================================================
+   THE SCOREBOARD ON A LIGHT PLATE.
+
+   marquee() draws its own type in --chalk, which is near-WHITE in the dark
+   themes. Dropped onto the light background that was 1.19:1 - a white
+   score on a white card, i.e. an invisible scoreboard. The light plate is
+   theme-independent, so its inks have to be too.
+
+   This overrides colour only. Nothing about the marquee's layout, spacing
+   or behaviour is touched here, because the whole point of the scoreboard
+   treatment is that it IS the match card.
+   ===================================================================== */
+.bx-bg-light .mq-side-score,
+.bx-bg-light .mq-side.is-up .mq-side-score,
+.bx-bg-light .mq-mood.is-done { color: #0C1116; }
+.bx-bg-light .mq-side-name    { color: #444E58; }
+.bx-bg-light .mq-vs           { color: #7A848E; }
+.bx-bg-light .mq-where        { color: #444E58; }
+.bx-bg-light .mq-tag          { color: #333B44; border-color: rgba(0,0,0,.25); background: rgba(0,0,0,.04); }
+.bx-bg-light .mq-side.is-down .mq-side-score { color: #6B747E; }
+
+/* An event's "in 2 weeks" is display type, so a commissioner pasting a
+   paragraph into that field must not be able to push the stage open. */
+.bx-when-text {
+  max-width: 18ch;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+
+/* =====================================================================
+   THE LIGHT THEME, as opposed to the light SLIDE BACKGROUND.
+
+   These are different things and the first cut only handled the second.
+   .bx-bg-light is a plate a commissioner chooses for one slide; the app
+   also has a light MODE, in which the house plate itself is white - and
+   the house plate was still wearing the dark theme's decorations. A
+   rgba(0,0,0,.42) vignette on a white stage is a black frame, and a white
+   weave on white is nothing at all.
+   ===================================================================== */
+:root[data-mode="light"] .bx-bg-default .bx-vignette,
+:root[data-mode="light"] .bx-bg-logo .bx-vignette {
+  background: radial-gradient(115% 85% at 50% 45%, transparent 50%, rgba(16,24,40,.14) 100%);
+}
+:root[data-mode="light"] .bx-bg-default .bx-weave,
+:root[data-mode="light"] .bx-bg-logo .bx-weave {
+  background-image:
+    linear-gradient(rgba(16,24,40,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,24,40,.05) 1px, transparent 1px);
+}
+/* The mark is a light-on-dark asset, so on a white plate it needs to be
+   darkened rather than merely faded or it disappears. */
+:root[data-mode="light"] .bx-bg-default .bx-crest,
+:root[data-mode="light"] .bx-bg-logo .bx-crest,
+.bx-bg-light .bx-crest { filter: invert(1) brightness(.35); opacity: .13; }
+/* Restated AFTER the invert above, because the two have equal specificity and
+   source order decides. The mask is painted in --chalk either way. */
+:root[data-mode="light"] .bx-bg-default .bx-crest.is-chip,
+:root[data-mode="light"] .bx-bg-logo .bx-crest.is-chip,
+.bx-bg-light .bx-crest.is-chip { filter: none; opacity: .11; }
+:root[data-mode="light"] .bx-sweep { background: linear-gradient(90deg, transparent, rgba(16,24,40,.05), transparent); }
+
+/* =====================================================================
+   TREATMENT SIGNATURES
+
+   Six treatments that were distinguished mostly by which fields they
+   happened to fill. Each now has ONE structural idea, and one only -
+   the restraint is the point, because six competing layouts is a
+   template gallery rather than a package.
+
+     scoreboard    two sides and a tale of the tape   (marquee, unchanged)
+     champion      a name under gold                  (rule + centred crest)
+     stat          a figure standing on a baseline
+     announcement  editorial - a column with a margin rule
+     event         a date in a frame
+     hero          the creed, spaced out
+   ===================================================================== */
+
+/* THE STATION IDENT. Top right, opposite the corner bracket, quiet enough
+   to be furniture. */
+.bx-ident {
+  position: absolute; top: 12px; right: 14px; z-index: 5;
+  display: inline-flex; align-items: baseline; gap: 4px;
+  font-family: var(--font-display);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: .75;
+  pointer-events: none;
+}
+.bx-ident i { font-style: normal; color: var(--accent); }
+
+/* STAT - the figure stands on a line, the way a scoreboard number does. */
+.bx-stat .bx-figure { position: relative; padding-bottom: var(--s-2); }
+.bx-stat .bx-figure::after {
+  content: "";
+  position: absolute; left: 50%; bottom: 0;
+  width: 2.2em; height: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, var(--accent-fill), transparent);
+}
+
+/* EVENT - the countdown sits in a frame, like a fixture card. */
+.bx-when-text {
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--control-bg);
+}
+
+/* HERO - the creed is the one place letterspacing carries the identity. */
+.bx-hero .bx-name { letter-spacing: .04em; }
+
+/*
+  ANNOUNCEMENT - the only treatment that is prose, so on a screen wide
+  enough it stops pretending to be a title card and becomes a column with
+  a margin rule. Phones keep the centred layout: a 375px column with a
+  rule down the side is just a narrower column.
+*/
+@media (min-width: 720px) {
+  .bx-slide.is-announcement:not(.bx-bg-image) { justify-items: start; text-align: left; }
+  .bx-slide.is-announcement .bx-note { justify-items: start; padding-left: var(--s-5); position: relative; }
+  .bx-slide.is-announcement .bx-note::before {
+    content: "";
+    position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 2px; border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent-fill), transparent);
+  }
+}
+
+/*
+  THE SCOREBOARD'S FIGURES INSIDE THE STAGE.
+
+  marquee() sizes its scores for the golf match card, which is a full-width
+  page component. The stage is narrower - 375px minus 108px of arrow
+  clearance leaves a 110px column per side - and "125.12" at the card's
+  size is 133px wide, so it burst out of its column and slid under the
+  next-slide arrow.
+
+  Scaled to the viewport here rather than changed in marquee.css, because
+  the card itself is fine at its own size and this is the stage's
+  constraint, not the component's. min-width: 0 is the other half: a grid
+  item's automatic minimum size beats max-width, so without it the figure
+  simply refuses to be narrower than its content.
+*/
+.bx-slide .mq-side-score {
+  font-size: clamp(1.5rem, 8.5vw, 2.6rem);
+  min-width: 0;
+  max-width: 100%;
+}
+.bx-slide .mq-side-name { font-size: clamp(.72rem, 3.4vw, var(--fs-h3)); }
+.bx-slide .mq-side { min-width: 0; }
+
+/*
+  ONE CREST PER SLIDE. marquee() now carries the dfl-mark watermark, which
+  is right on the golf match page - but on the broadcast stage the slide
+  already draws its own crest for the champion and logo treatments, and two
+  overlapping marks at different sizes reads as a printing error. The
+  stage's own crest wins inside the stage.
+*/
+.bx-slide .mq-card.dfl-mark::after { display: none; }
+
+/* =====================================================================
+   PER-SLIDE WATERMARK STRENGTH
+
+   The crest is right at 7% on a plain plate and too loud over a
+   photograph, where it fights the artwork. Each slide now says how strong
+   its own should be, and an image background quietly drops a step on its
+   own so the common case needs no thought from the admin.
+   ===================================================================== */
+.bx-logo-subtle .bx-crest { opacity: .045; }
+.bx-logo-faint  .bx-crest { opacity: .028; }
+.bx-logo-hidden .bx-crest { display: none; }
+
+/* Over artwork, even "default" is a step quieter - unless the slide has
+   explicitly asked for something else. */
+.bx-bg-image.bx-logo-default .bx-crest { opacity: .04; }
+
+/* Light mode inverts the mark, and an inverted mark at the same number
+   reads heavier on white than white-on-dark does. Each step is nudged
+   down to match what the eye actually sees. */
+:root[data-mode="light"] .bx-logo-subtle .bx-crest { opacity: .07; }
+:root[data-mode="light"] .bx-logo-faint  .bx-crest { opacity: .045; }

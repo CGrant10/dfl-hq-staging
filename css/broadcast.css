@@ -1,0 +1,118 @@
+@import url("./broadcast-base.css");
+@import url("./admin.css");
+
+/* Winner end card: the race is over, so the race view is gone. */
+.bc-stage.is-finished .bc-winner {
+  position:absolute!important;
+  inset:0!important;
+  z-index:20!important;
+  overflow:hidden;
+  isolation:isolate;
+  display:grid!important;
+  place-items:center!important;
+  background:
+    radial-gradient(circle at 50% 44%,rgba(255,216,74,.16),transparent 40%),
+    linear-gradient(180deg,#071019 0%,#05080c 58%,#020407 100%)!important;
+}
+.bc-stage.is-finished .bc-winner::before {
+  content:"";
+  position:absolute;
+  inset:-5% -2%;
+  z-index:-1;
+  background:#000 url("../icons/dfl-seal-heritage-512.webp") center/contain no-repeat;
+  border-radius:50%;
+  opacity:.15;
+  filter:grayscale(1) brightness(1.9);
+  pointer-events:none;
+}
+.bc-stage.is-finished .bc-winner::after { display:none!important; }
+.bc-stage.is-finished .bc-winner-inner {
+  position:absolute!important;
+  inset:0!important;
+  z-index:1;
+  display:grid!important;
+  grid-auto-rows:max-content;
+  place-items:center!important;
+  align-content:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  padding:clamp(18px,3vw,52px)!important;
+  box-sizing:border-box;
+  gap:clamp(7px,.65vw,14px);
+  text-align:center!important;
+}
+.bc-stage.is-finished .bc-winner-kicker {
+  display:block;
+  justify-self:center!important;
+  width:max-content!important;
+  margin:0 auto!important;
+  padding:0!important;
+  text-align:center!important;
+  transform:translateX(.17em);
+  font-size:clamp(22px,1.7vw,34px);
+  font-weight:800;
+  line-height:1;
+  letter-spacing:.34em;
+  color:#ffd84a;
+}
+.bc-stage.is-finished .bc-winner-art {
+  display:block;
+  justify-self:center!important;
+  width:min(28vw,380px);
+  height:min(19vw,255px);
+  margin:.15vw auto .25vw!important;
+}
+.bc-stage.is-finished .bc-winner-name {
+  display:block;
+  justify-self:center!important;
+  width:100%;
+  max-width:min(96vw,1500px);
+  margin:0 auto!important;
+  text-align:center!important;
+  font-size:clamp(62px,9.2vw,180px);
+  line-height:.84;
+  text-wrap:balance;
+}
+.bc-stage.is-finished .bc-winner-name::after {
+  content:"JUST FOLDED EVERYONE";
+  display:block;
+  margin-top:clamp(13px,1.25vw,26px);
+  font-size:clamp(20px,2.15vw,43px);
+  line-height:1;
+  letter-spacing:.12em;
+  text-indent:.12em;
+  color:#ffd84a;
+}
+.bc-stage.is-finished .bc-winner-event {
+  display:block;
+  width:100%;
+  text-align:center!important;
+  margin-top:clamp(8px,.7vw,14px);
+  font-size:clamp(11px,.95vw,18px);
+  opacity:.58;
+}
+@media(max-width:800px){
+  .bc-stage.is-finished .bc-winner::before{inset:-2% -22%;opacity:.14}
+  .bc-stage.is-finished .bc-winner-inner{padding:18px 10px!important}
+  .bc-stage.is-finished .bc-winner-kicker{font-size:clamp(21px,6vw,30px);letter-spacing:.28em;transform:translateX(.14em)}
+  .bc-stage.is-finished .bc-winner-art{width:min(52vw,280px);height:min(36vw,195px)}
+  .bc-stage.is-finished .bc-winner-name{font-size:clamp(46px,14.5vw,92px);line-height:.86}
+  .bc-stage.is-finished .bc-winner-name::after{font-size:clamp(15px,4.6vw,28px);letter-spacing:.075em;text-indent:.075em}
+}
+
+/* Mobile collapsed race controls: collapse the SHELL too, not just its contents. */
+@media(max-width:900px){
+  .bc-bar.mobile-collapsed{
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+  }
+  .bc-bar.mobile-collapsed .bc-bar-toggle{
+    margin:0!important;
+    box-shadow:0 4px 14px rgba(0,0,0,.34);
+  }
+}

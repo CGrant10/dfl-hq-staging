@@ -1,0 +1,1264 @@
+/* =====================================================================
+   team-analyzer.css - the season report
+   ---------------------------------------------------------------------
+   REWRITTEN FOR LEGIBILITY FIRST.
+
+   The report was drawn at 7px, 8px and 10px. Those are not small type,
+   they are unreadable type: 8px on a phone is roughly half the smallest
+   size either platform's own guidance allows, and the report carried its
+   labels, its table headers, its player notes and its whole method
+   footnote at that size. Everything here now sits on one scale with 11px
+   as the floor, and the floor is only for uppercase micro-labels.
+
+   Second problem, same cause: five tables with min-widths of 690 to 940px
+   inside a 375px phone. Four of them scrolled sideways, which is how you
+   hide a column of data from somebody holding the device the app is
+   mostly used on. Below 680px the tables stop being tables and become
+   stacked rows, each cell labelled by the header it belongs to - see
+   [data-label] and the tbody/tr/td overrides at the bottom.
+
+   Third, coherence. The week panel above this report already had a visual
+   language - pills for status, bars for magnitude, one accent for "good".
+   This now speaks it too rather than inventing a second one.
+   ===================================================================== */
+
+/* --------------------------- scale + card --------------------------- */
+/*
+  ONE INNER CARD, NOT SIX.
+
+  An audit of this page found five different corner radii on things that are
+  all "a small card" - 8, 10, 11, 12 and square - over four different
+  backgrounds and five padding values. Nobody chose that; it accumulated one
+  component at a time. Every inner surface now takes these tokens, so a stat
+  tile, a player row, a trend row and a lineup slot are visibly the same
+  object.
+*/
+.ta-report,
+.ta-toolbar,
+.so-panel,
+.wo-panel {
+  --ta-micro: 11px;   /* uppercase labels only, never a sentence */
+  --ta-small: 12.5px; /* secondary lines under a name */
+  --ta-body:  14px;   /* anything that is read rather than scanned */
+  --ta-lead:  16px;
+
+  --card-radius: 10px;
+  --card-bg: var(--bg-3);
+  --card-line: var(--line-soft);
+  --card-pad: 8px 10px;
+  --panel-radius: 16px;
+}
+
+/* =====================================================================
+   THE BRIEFING
+   ---------------------------------------------------------------------
+   What replaced .ta-report-lead's eight equal numbers. One grade at size,
+   one sentence, four ranked findings, and a row of jumps into the tables -
+   which are all still below, complete and unchanged.
+
+   It uses the same tokens as everything else on the page, so a finding and
+   a table row are visibly the same product. The only thing it is allowed
+   to do louder than the rest of the report is the grade, because that is
+   the answer the page exists to give.
+   ===================================================================== */
+.ta-brief {
+  position: relative;
+  margin-bottom: 14px;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--panel-radius);
+  background: var(--card-surface);
+  box-shadow: var(--card-shadow), inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+}
+/* The crest gradient, welded to the top edge - the same device the stage,
+   the marquee and the Sportsbook masthead use. */
+.ta-brief::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--accent-sweep);
+}
+.ta-brief-eyebrow {
+  display: block;
+  color: var(--accent);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.ta-brief h2 {
+  margin: 4px 0 12px;
+  font-family: var(--font-display);
+  font-size: clamp(21px, 5.2vw, 27px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+}
+
+/* THE VERDICT. The grade is the only 40px thing on the page. */
+.ta-brief-verdict {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--vl, var(--line));
+  border-radius: var(--card-radius);
+  background: var(--vb, var(--bg-3));
+}
+.ta-brief-verdict.is-elite   { --vc: var(--ok);         --vb: var(--ok-bg);     --vl: var(--ok-line); }
+.ta-brief-verdict.is-good    { --vc: var(--accent-2);   --vb: color-mix(in srgb, var(--accent-2) 12%, transparent); --vl: color-mix(in srgb, var(--accent-2) 38%, var(--line)); }
+.ta-brief-verdict.is-average { --vc: var(--warn-ink);   --vb: var(--warn-bg);   --vl: var(--warn-line); }
+.ta-brief-verdict.is-weak    { --vc: var(--danger-ink); --vb: var(--danger-bg); --vl: var(--danger-line); }
+.ta-brief-verdict b {
+  flex: none;
+  color: var(--vc);
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.05em;
+}
+.ta-brief-verdict small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.ta-brief-verdict span {
+  display: block;
+  margin-top: 2px;
+  color: var(--body-text);
+  font-size: var(--ta-body);
+  line-height: 1.4;
+}
+
+/* THE FINDINGS. A tone mark, a claim, the figure behind it, and the way in. */
+.ta-findings { margin-top: 4px; }
+.ta-finding {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 11px;
+  padding: 13px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.ta-finding i {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--fl);
+  border-radius: 50%;
+  background: var(--fb);
+  color: var(--fc);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+}
+.ta-finding.is-good    { --fc: var(--ok);         --fb: var(--ok-bg);     --fl: var(--ok-line); }
+.ta-finding.is-bad     { --fc: var(--danger-ink); --fb: var(--danger-bg); --fl: var(--danger-line); }
+.ta-finding.is-warn    { --fc: var(--warn-ink);   --fb: var(--warn-bg);   --fl: var(--warn-line); }
+.ta-finding.is-neutral { --fc: var(--muted);      --fb: var(--bg-3);      --fl: var(--line); }
+.ta-finding strong {
+  display: block;
+  font-size: var(--ta-lead);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -.01em;
+}
+.ta-finding p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--ta-body);
+  line-height: 1.55;
+}
+/* The way into the evidence. A button on this page, an anchor off it - see
+   findingAction() for why. Both have to look like the same thing. */
+.ta-finding-go,
+.ta-jump button {
+  font: inherit;
+  cursor: pointer;
+}
+.ta-finding-go {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-2) 40%, transparent);
+  background: none;
+  color: var(--accent-2);
+  font-size: var(--ta-small);
+  font-weight: 700;
+  text-decoration: none;
+}
+.ta-finding-go:hover { border-bottom-color: var(--accent-2); }
+
+.ta-jump {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ta-jump::-webkit-scrollbar { display: none; }
+.ta-jump button {
+  flex: none;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-2);
+  color: var(--body-text);
+  font-size: var(--ta-small);
+  font-weight: 700;
+}
+.ta-jump button:hover { border-color: color-mix(in srgb, var(--accent-2) 45%, var(--line)); color: var(--text); }
+
+/* The season outlook joined the evidence flow instead of floating above the
+   report, so it needs the same top margin the folded sections have. */
+#outlook.so-panel { margin-top: 14px; }
+
+@media (max-width: 480px) {
+  .ta-brief { padding: 14px; }
+  .ta-brief-verdict { gap: 12px; padding: 11px 12px; }
+  .ta-brief-verdict b { font-size: 34px; }
+  .ta-finding strong { font-size: var(--ta-body); }
+}
+
+/* ----------------------------- header ------------------------------- */
+
+.ta-page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+
+.ta-toolbar {
+  display: grid; grid-template-columns: minmax(240px, .75fr) 1.25fr;
+  align-items: end; gap: 18px;
+  margin-bottom: 12px; padding: 13px 14px;
+  border-block: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-2) 74%, transparent);
+}
+.ta-toolbar label, .ta-inline-select { display: grid; gap: 5px; }
+.ta-toolbar label span,
+.ta-inline-select span,
+.ta-report-title small {
+  color: var(--accent-2); font-size: var(--ta-micro);
+  font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+}
+.ta-toolbar select, .ta-inline-select select {
+  width: 100%; min-height: 44px; padding: 0 11px;
+  border: 1px solid var(--line); border-radius: 9px;
+  background: var(--bg-3); color: var(--text); font: inherit; font-weight: 700;
+}
+.ta-toolbar p { margin: 0; color: var(--muted); font-size: var(--ta-small); line-height: 1.45; }
+
+/* ------------------------------ report ------------------------------ */
+
+.ta-report {
+  overflow: hidden; border: 1px solid var(--line); border-radius: var(--panel-radius);
+  background: var(--bg-2); box-shadow: var(--shadow);
+}
+
+/*
+  THE LEAD BLOCK IS GONE.
+
+  .ta-report-lead, .ta-lead-top, .ta-team-intro, .ta-finish, .ta-kpis,
+  .ta-grade-stack, .ta-grade-card and .ta-top-asset drew the old eight-number
+  header on both analyzer routes. The Team Analyzer opens with .ta-brief now
+  and the Trade Analyzer with .td-who and the ticket, so all of it was dead -
+  about ninety lines, including three media queries' worth of overrides.
+
+  Only the four grade tones survived, because .ta-unit-grade shares them and
+  the position report still draws it.
+*/
+.ta-unit-grade.is-elite strong   { color: var(--ok); }
+.ta-unit-grade.is-good strong    { color: var(--accent-2); }
+.ta-unit-grade.is-average strong { color: var(--warn); }
+.ta-unit-grade.is-weak strong    { color: var(--danger); }
+
+/* ---------------------------- sections ------------------------------ */
+
+.ta-report-section { padding: 14px 18px; border-top: 1px solid var(--line); }
+.ta-report-section:first-of-type { border-top: 0; }
+
+/* A section is a <details>; its title is the <summary>. */
+.ta-report-title {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin-bottom: 9px; cursor: pointer; list-style: none;
+}
+.ta-report-title::-webkit-details-marker { display: none; }
+.ta-report-title h2 { margin: 2px 0 0; font-size: 17px; }
+.ta-report-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+details[open] > .ta-report-title { margin-bottom: 12px; }
+/* Closed, the title is the whole section, so it owes no bottom margin. */
+details:not([open]) > .ta-report-title { margin-bottom: 0; }
+
+/* What is inside, said on the outside - a fold you cannot see into is a fold
+   nobody opens. */
+.ta-fold-hint {
+  margin-left: auto; color: var(--muted); font-size: var(--ta-small);
+  white-space: nowrap;
+}
+.ta-fold-chevron {
+  flex: none; width: 10px; height: 10px; margin-right: 2px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg); transition: transform .18s ease;
+}
+details[open] > .ta-report-title .ta-fold-chevron { transform: rotate(-135deg); }
+.ta-report-title:hover .ta-fold-chevron { border-color: var(--accent); }
+/* The aside had been in the head; in the body it needs its own breathing room. */
+.ta-section-body > .ta-inline-note,
+.ta-section-body > .ta-inline-select { display: block; margin-bottom: 10px; }
+.ta-section-body > .ta-inline-select { display: grid; }
+.ta-inline-note { max-width: 640px; color: var(--muted); font-size: var(--ta-small); line-height: 1.45; }
+.ta-inline-select { grid-template-columns: auto minmax(180px, 260px); align-items: center; }
+.ta-inline-select select { min-height: 40px; }
+
+/* ----------------------------- tables ------------------------------- */
+
+.ta-table-wrap { overflow-x: auto; border-block: 1px solid var(--line-soft); scrollbar-width: thin; }
+.ta-table { width: 100%; border-collapse: collapse; font-size: var(--ta-body); font-variant-numeric: tabular-nums; }
+.ta-table th {
+  position: sticky; top: 0; z-index: 1; padding: 9px 11px;
+  background: var(--bg-3); color: var(--muted);
+  font-size: var(--ta-micro); letter-spacing: .06em; text-align: left;
+  text-transform: uppercase; white-space: nowrap;
+}
+.ta-table td { padding: 11px; border-top: 1px solid var(--line-soft); color: var(--body-text); vertical-align: middle; }
+.ta-table tbody tr:first-child td { border-top: 0; }
+.ta-table tbody tr:hover td { background: color-mix(in srgb, var(--accent-fill) 5%, var(--bg-2)); }
+
+.ta-pos {
+  display: inline-grid; place-items: center; width: 38px; height: 30px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-fill) 8%, var(--bg-3));
+  color: var(--accent-2); font-size: var(--ta-body); font-weight: 800; letter-spacing: .06em;
+}
+.ta-unit-grade { display: grid; grid-template-columns: auto 64px; align-items: center; gap: 9px; }
+.ta-unit-grade strong { font-family: var(--font-display); font-size: 20px; }
+.ta-unit-grade i { overflow: hidden; height: 6px; border-radius: 999px; background: var(--line-soft); }
+.ta-unit-grade i span { display: block; height: 100%; border-radius: inherit; background: currentColor; }
+
+.ta-player-run { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.ta-player-run span, .ta-player { display: grid; min-width: 130px; }
+.ta-player-run span.is-depth { opacity: .68; }
+.ta-player-run b, .ta-player b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ta-player-run small, .ta-player small { margin-top: 2px; color: var(--muted); font-size: var(--ta-small); }
+.ta-position-table td:last-child { width: 52%; }
+
+.ta-roster-table { min-width: 880px; }
+.ta-roster-table tr.is-starter td:first-child { box-shadow: inset 3px 0 var(--accent); }
+.ta-roster-table tr.is-bench { opacity: .8; }
+.ta-roster-divider td {
+  padding: 8px 11px !important;
+  background: color-mix(in srgb, var(--accent-fill) 8%, var(--bg-3)) !important;
+  color: var(--accent-2) !important; font-size: var(--ta-micro); font-weight: 900; letter-spacing: .07em;
+}
+.ta-role {
+  display: inline-flex; padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--bg-3); font-size: var(--ta-micro); font-weight: 800; text-transform: uppercase;
+}
+.ta-expected { font-size: var(--ta-lead); font-weight: 700; }
+.ta-trend {
+  display: inline-flex; padding: 4px 8px; border-radius: 999px; background: var(--bg-3);
+  font-size: var(--ta-micro); font-weight: 800; white-space: nowrap;
+}
+.ta-trend.is-up { color: var(--ok); }
+.ta-trend.is-down { color: var(--danger); }
+.ta-trend.is-new { color: var(--accent-2); }
+.ta-value {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-fill) 12%, var(--bg-3));
+  color: var(--accent-2); font-weight: 800; font-size: var(--ta-small);
+}
+
+.ta-compare-summary {
+  display: flex; align-items: baseline; justify-content: flex-start; gap: 10px;
+  padding: 10px 12px; background: var(--bg-3); font-size: var(--ta-body);
+}
+.ta-compare-summary span { color: var(--muted); font-size: var(--ta-small); }
+.ta-comparison-table th:not(:first-child),
+.ta-comparison-table td:not(:first-child) { width: 30%; text-align: center; }
+.ta-comparison-table td.wins {
+  background: color-mix(in srgb, var(--ok) 12%, var(--bg-2)); color: var(--ok); font-weight: 900;
+}
+
+.ta-league-table { min-width: 700px; }
+/* is-compact was on the markup and meant nothing. It means this: a table of
+   fourteen one-line rows does not need the row height of a table of prose. */
+.ta-table.is-compact td { padding: 8px 11px; }
+/* The seed rides inside the team cell rather than owning a column. */
+.ta-seed {
+  display: inline-grid; place-items: center; min-width: 22px; height: 20px;
+  flex: none; margin-right: 7px; padding: 0 5px; border-radius: 6px;
+  background: color-mix(in srgb, var(--accent-fill) 14%, var(--bg-2));
+  color: var(--accent-2); font-size: var(--ta-micro); font-weight: 800;
+}
+.ta-league-table button {
+  display: grid; min-width: 160px; padding: 0; border: 0; background: none;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+/* The name truncates; the seed and the badge either side of it never do. */
+.ta-league-table button strong { display: flex; align-items: center; min-width: 0; }
+.ta-league-table .ta-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ta-league-table button small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ta-league-table button small { margin-top: 3px; color: var(--muted); font-size: var(--ta-small); }
+/*
+  THE ROW BEING READ, MARKED WITHOUT A STRIPE.
+
+  A flat 10% wash plus a hard 3px inset bar was the loudest thing on the page
+  and still said nothing about WHY that row differed. The tint is now a short
+  gradient that fades out across the row - present where the name is, gone by
+  the time it reaches the numbers - and the badge in the name cell carries the
+  meaning. The seed and the name lift with it so the row reads as promoted
+  rather than painted.
+*/
+/* The gradient goes on the ROW. On the cells it restarts inside each one, so
+   a five-column row drew five separate fades with a hard seam between each -
+   the exact banding a single wash was meant to avoid. */
+.ta-league-table tr.is-current {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent-fill) 15%, transparent), transparent 72%);
+}
+.ta-league-table tr.is-current:hover {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent-fill) 21%, transparent), transparent 72%);
+}
+.ta-league-table tr.is-current td,
+.ta-league-table tr.is-current:hover td { background: none; }
+.ta-league-table tr.is-current td:first-child { box-shadow: none; }
+.ta-league-table tr.is-current button strong { color: var(--text); font-weight: 800; }
+.ta-league-table tr.is-current .ta-seed {
+  background: var(--accent-fill); color: var(--on-accent);
+}
+
+/* The badge itself. Hairline, uppercase, tabular - a label, not a highlighter. */
+.ta-mark {
+  display: inline-block; flex: none; margin-left: 8px; padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px; background: color-mix(in srgb, var(--accent-fill) 14%, transparent);
+  color: var(--accent-2); font-size: 9px; font-weight: 800;
+  letter-spacing: .09em; line-height: 1.6; text-transform: uppercase;
+  vertical-align: 2px;
+}
+.ta-mark.is-you {
+  border-color: transparent; background: var(--accent-fill); color: var(--on-accent);
+}
+
+.ta-note { margin: -2px 0 9px; color: var(--muted); font-size: var(--ta-small); line-height: 1.5; }
+.ta-trade-table { min-width: 660px; }
+/* The name and its qualifier were stacked with no gap, so "Straight up" sat
+   directly under the partner and read as one run of text. */
+.ta-trade-table td:first-child, .ta-trade-table td:last-child { display: grid; gap: 3px; align-content: center; }
+.ta-trade-table td small { color: var(--muted); font-size: var(--ta-micro); line-height: 1.3; }
+.ta-trade-table td { line-height: 1.35; }
+.ta-trade-table td b, .ta-trade-table td strong { line-height: 1.3; }
+.ta-balance {
+  display: inline-flex; min-width: 44px; justify-content: center; padding: 5px 8px;
+  border-radius: 999px; background: var(--bg-3); font-weight: 900; font-size: var(--ta-small);
+}
+.ta-trade-table .positive { color: var(--ok); }
+.ta-trade-table .negative { color: var(--danger); }
+.ta-empty { padding: 16px; border-block: 1px dashed var(--line); color: var(--muted); font-size: var(--ta-body); line-height: 1.55; }
+/* The method belongs on the page - a report that will not say how it decided
+   is worth less - but it is a footnote, not a chapter, and expanded it ran
+   longer than the section it explains. */
+.ta-method {
+  margin: 0; padding: 12px 22px; border-top: 1px solid var(--line);
+  background: var(--bg-3); color: var(--muted); font-size: var(--ta-small); line-height: 1.6;
+}
+.ta-method > summary {
+  cursor: pointer; list-style: none;
+  font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  font-size: var(--ta-micro); color: var(--accent-2);
+}
+.ta-method > summary::-webkit-details-marker { display: none; }
+.ta-method > summary:after { content: " +"; }
+.ta-method[open] > summary:after { content: " 2"; }
+.ta-method > p { margin: 9px 0 0; }
+
+/* --------------------------- responsive ----------------------------- */
+
+@media (max-width: 900px) {
+  .ta-position-table td:last-child { width: auto; }
+}
+
+@media (max-width: 680px) {
+  .ta-toolbar { grid-template-columns: 1fr; gap: 10px; }
+  .ta-report { border-inline: 0; border-radius: 0; }
+  .ta-report-section { padding: 16px 14px; }
+  .ta-inline-note { font-size: var(--ta-small); }
+  .ta-inline-select { grid-template-columns: 1fr; }
+  .ta-compare-summary { align-items: flex-start; flex-direction: column; }
+  .ta-method { padding-inline: 14px; }
+
+  /*
+    TABLES BECOME STACKED ROWS.
+
+    Every wide table here was scrolling sideways on a phone, which does not
+    shrink the problem - it moves half the columns off the edge where nobody
+    looks for them. Each row becomes a card and each cell announces its own
+    column through data-label, set in analyzer.js.
+
+    The comparison table is exempt: it is three narrow columns that already
+    fit, and stacking a side-by-side comparison destroys the very thing it
+    exists to show.
+  */
+  .ta-table-wrap { overflow-x: visible; border-block: 0; }
+  .ta-table:not(.ta-comparison-table) { min-width: 0; display: block; }
+  .ta-table:not(.ta-comparison-table) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .ta-table:not(.ta-comparison-table) tbody { display: grid; gap: 6px; }
+
+  /*
+    A row is a card, and its cells are a two-column stat grid rather than one
+    label per line. Nine stacked lines per player turned fifteen players into
+    a page nobody scrolls to the end of; paired, the same card is half as tall
+    and reads as a block of stats instead of a list of sentences.
+  */
+  /*
+    THREE COLUMNS, NOT TWO, AND TIGHTER.
+
+    Two columns still ran fourteen players to 4,000px. These labels are short
+    enough for three tracks at 375px, which turns four stat rows into three
+    and takes roughly a third off every card without hiding a single number.
+  */
+  /*
+    THE LABEL SITS BESIDE THE VALUE, NOT ABOVE IT.
+
+    Stacking them put every statistic on two lines, and a player card came to
+    227px - fourteen of those is three thousand pixels of scrolling for one
+    table. On one line each, in two columns, the same card is about 140px and
+    not one number was removed to get there.
+  */
+  .ta-table:not(.ta-comparison-table) tbody tr {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px 14px; padding: var(--card-pad);
+    border: 1px solid var(--card-line); border-radius: var(--card-radius); background: var(--card-bg);
+  }
+  .ta-table:not(.ta-comparison-table) tbody tr:hover td { background: none; }
+  .ta-table:not(.ta-comparison-table) td {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 8px; padding: 2px 0; border: 0; min-width: 0;
+    line-height: 1.35;
+  }
+  .ta-table:not(.ta-comparison-table) td[data-label]:before {
+    content: attr(data-label);
+    flex: none; color: var(--muted); font-size: var(--ta-micro); font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+  /* The value side keeps its own alignment and cannot be squeezed to nothing. */
+  .ta-table:not(.ta-comparison-table) td[data-label] > * { text-align: right; }
+  /* A 32px circle and a pill were setting the line height of every row they
+     sat in. Stacked, they are just the number and the word. */
+  .ta-table:not(.ta-comparison-table) .ta-value {
+    width: auto; height: auto; border-radius: 0; background: none; display: inline;
+  }
+  .ta-table:not(.ta-comparison-table) .ta-role,
+  .ta-table:not(.ta-comparison-table) .ta-trend { padding: 1px 6px; }
+  /* The first cell names the row, so it spans and rules a line under itself. */
+  .ta-table:not(.ta-comparison-table) td:first-child {
+    grid-column: 1 / -1; display: block; padding: 0 0 5px;
+    margin-bottom: 3px; border-bottom: 1px solid var(--line-soft);
+  }
+  .ta-table:not(.ta-comparison-table) td:first-child:before { display: none; }
+  .ta-roster-divider td { grid-column: 1 / -1 !important; border-bottom: 0 !important; padding-bottom: 0 !important; }
+
+  /*
+    THE STARTER MARK MOVES TO THE CARD EDGE.
+
+    As a table it was an inset shadow on the first cell, sitting harmlessly in
+    that cell's padding. Stacked, the cells have no padding - so the bar was
+    painted straight over the first letter of every starter's name: "Josh
+    Allen" with a red stripe through the J. A card's status belongs on the
+    card's own edge, where there is nothing to collide with.
+  */
+  .ta-roster-table tr.is-starter td:first-child,
+  .ta-league-table tr.is-current td:first-child { box-shadow: none; }
+  .ta-roster-table tbody tr.is-starter {
+    border-left: 3px solid var(--accent); padding-left: 9px;
+  }
+  /* Long prose cells earn the full width back. */
+  .ta-position-table td:last-child {
+    grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px;
+  }
+  /* Prefixed to out-specify the shared `td[data-label] > *` right-align rule. */
+  .ta-position-table td[data-label]:last-child > * { text-align: left; }
+  /* That cell puts its label above the value, so the label must not also be
+     pushed to the far side by the shared space-between rule. */
+  .ta-position-table td:last-child:before { justify-self: start; }
+
+  /*
+    THE PROJECTED TABLE, HALF THE HEIGHT.
+
+    Fourteen cards of five stacked blocks ran the league outlook past 2,000px
+    on a phone, and four of those five lines were a label sitting on top of two
+    words. Every cell now reads label-left / value-right on ONE line, and "Best
+    unit" and "Need" - the two that had claimed the full width to stack - are
+    short enough to do the same. The header cell loses its rule and most of its
+    padding: the name is already bold and already first, so a hairline under it
+    was buying separation the card's own border had provided.
+
+    Nothing was removed. The same five facts per team, in four lines instead
+    of nine.
+  */
+  /* Best unit and Need are two words each. They pair off across the same two
+     tracks as Weekly and Grades rather than claiming a full row apiece. */
+  .ta-table.ta-league-table td:nth-child(4), .ta-table.ta-league-table td:last-child {
+    grid-column: auto; gap: 6px;
+  }
+  .ta-table.ta-league-table td:nth-child(4) { text-align: right; }
+  .ta-table.ta-league-table td:last-child { justify-content: flex-end; }
+  .ta-table.ta-league-table td:last-child:before { margin-right: auto; }
+  .ta-table.ta-league-table td:first-child {
+    padding: 0 0 4px; margin-bottom: 2px; border-bottom: 0;
+  }
+  .ta-table.ta-league-table tbody tr { gap: 1px 12px; padding: 9px 11px; }
+  .ta-league-table button { min-height: 0; }
+  .ta-league-table button small { margin-top: 1px; }
+
+  /*
+    AND THE CARD BEING READ IS A CARD, NOT A CARD WITH A BAR ON IT.
+
+    The 3px stripe and its 9px of compensating padding made the marked card a
+    different SHAPE from its neighbours, which is the reason it looked wrong
+    long before anyone looked at the colour. It now keeps the same geometry and
+    earns its accent honestly: a coloured border, a faint wash, and the badge
+    in the name row saying which team this is.
+  */
+  .ta-table.ta-league-table tbody tr.is-current {
+    border-color: color-mix(in srgb, var(--accent-fill) 55%, var(--card-line));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--accent-fill) 9%, transparent), transparent 62%),
+      var(--card-bg);
+    box-shadow: 0 1px 10px color-mix(in srgb, var(--accent-fill) 12%, transparent);
+  }
+  .ta-table.ta-league-table tbody tr.is-current td,
+  .ta-table.ta-league-table tbody tr.is-current:hover td { background: none; }
+
+  /*
+    THE WEEKLY-CHANGE CELL HAD THREE THINGS IN IT.
+
+    Label, the number, and "Other -0.8" - all in one space-between row, which
+    squeezed the middle one until "+0.8" wrapped to "+0." and "8" on the next
+    line. A number that breaks across lines is unreadable, so the number and
+    its footnote travel together on the right and neither may wrap.
+  */
+  .ta-table.ta-trade-table td:last-child {
+    grid-column: 1 / -1; display: flex; align-items: baseline;
+    justify-content: space-between; gap: 10px;
+  }
+  .ta-table.ta-trade-table td:last-child > b {
+    margin-left: auto; white-space: nowrap; font-size: var(--ta-body);
+  }
+  .ta-table.ta-trade-table td:last-child > small { flex: none; white-space: nowrap; }
+
+  /*
+    THE TRADE CARD IS ONE COLUMN, AND NOTHING IS STRANDED IN THE SECOND.
+
+    An offer has four facts and a title. In the shared two-track grid, "You
+    send" and "You receive" each claimed a full row to stack a label over a
+    name, "Balance" sat alone in track one with the whole right half of the
+    card blank beside it, and "Weekly change" took another full row - seven
+    lines of card for four numbers, with a hole in the middle of it.
+
+    One track, every fact on its own line, label left and value hard against
+    the right edge: the same reading pattern as every other card in the app,
+    no empty track to explain, and two lines shorter.
+  */
+  .ta-table.ta-trade-table tbody tr { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+  .ta-table.ta-trade-table td { padding: 3px 0; }
+
+  /*
+    THE PARTNER CELL IS THE CARD TITLE.
+
+    It asked for flex and a 7px gap and got neither: the shared
+    `.ta-table:not(.ta-comparison-table) td:first-child` rule is a class more
+    specific and kept the cell `display: block`, so the name and its "Straight
+    up" qualifier ran together with only the text node's own space between
+    them. Matching that specificity is the whole fix.
+  */
+  .ta-table.ta-trade-table td:first-child {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    padding: 0 0 6px;
+  }
+  .ta-table.ta-trade-table td:first-child small { flex: none; }
+  /* The two name cells wrap against the right edge like every other value. */
+  .ta-table.ta-trade-table td:nth-child(2), .ta-table.ta-trade-table td:nth-child(3) {
+    text-align: right;
+  }
+  /* Long values wrap rather than shove the card open. */
+  .ta-table:not(.ta-comparison-table) td { overflow-wrap: anywhere; }
+  .ta-table:not(.ta-comparison-table) td .ta-role,
+  .ta-table:not(.ta-comparison-table) td .ta-trend { justify-self: start; }
+  .ta-league-table button { min-width: 0; }
+}
+
+@media (max-width: 430px) {
+  .ta-page-head { align-items: flex-start; }
+  .ta-toolbar { margin-inline: -12px; padding-inline: 12px; }
+  .ta-report { margin-inline: -12px; }
+  .ta-report-section { padding-inline: 12px; }
+  .ta-table:not(.ta-comparison-table) tbody tr { gap: 2px 10px; }
+}
+
+/* =====================================================================
+   TRADE DESK - build a trade by hand
+   ---------------------------------------------------------------------
+   Two rosters side by side on a desk, stacked on a phone. The verdict
+   sits under them rather than above, because you build first and read
+   second, and a verdict that jumps around above the thing you are
+   editing is a verdict you stop trusting.
+   ===================================================================== */
+
+.td-party-controls { display:flex; align-items:end; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+.td-party-controls .ta-inline-select { margin:0; }
+.td-member-control { display:flex; align-items:end; gap:5px; }
+.td-remove-member { width:34px; height:40px; border:1px solid var(--line); border-radius:9px; background:var(--bg-3); color:var(--muted); font-size:21px; line-height:1; cursor:pointer; }
+.td-remove-member:hover { color:var(--danger); border-color:color-mix(in srgb,var(--danger) 40%,var(--line)); }
+.td-add-member { min-height:40px; }
+.td-board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.td-board.is-multi { grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); }
+.td-side { min-width: 0; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--bg-3); overflow: hidden; }
+.td-side-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding: 12px; border-bottom: 1px solid var(--line-soft); background: color-mix(in srgb, var(--bg-2) 60%, transparent); }
+.td-side-head small { display: block; color: var(--accent-2); font-size: var(--ta-micro); font-weight: 900; letter-spacing: .1em; }
+.td-side-head strong { display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ta-body); }
+.td-picked-count { flex:none; padding:4px 8px; border:1px solid var(--line-soft); border-radius:999px; color:var(--muted); font-size:var(--ta-micro); font-weight:800; }
+.td-search { display:block; padding:9px 10px; border-bottom:1px solid var(--line-soft); }
+.td-search input { width:100%; min-height:38px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:var(--bg-2); color:var(--text); font:inherit; }
+.td-search input:focus { outline:2px solid color-mix(in srgb,var(--accent-fill) 42%,transparent); outline-offset:1px; }
+/*
+  NO INNER SCROLLER.
+
+  The roster lists were capped at 320px with their own overflow, which turned
+  the middle of the page into a scroll trap: a thumb dragged over a roster
+  scrolled that list instead of the page, and getting past the board meant
+  finding the narrow gutter beside it. A nested scroller inside a scrolling
+  page is nearly always the wrong answer on a phone.
+
+  The lists run their full length now and the page scrolls as one thing. The
+  verdict being below them is fine - the board is built first and read second,
+  and a "jump to verdict" link handles the long-roster case.
+*/
+.td-list { overflow: visible; }
+
+.td-player {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: 9px; padding: 8px 11px; cursor: pointer;
+  border-bottom: 1px solid var(--line-soft);
+}
+.td-player:last-child { border-bottom: 0; }
+.td-player:hover { background: color-mix(in srgb, var(--accent-fill) 6%, transparent); }
+.td-player.is-picked { background: color-mix(in srgb, var(--accent-fill) 13%, transparent); }
+.td-player input { width: 17px; height: 17px; accent-color: var(--accent-fill); }
+.td-player-copy { min-width: 0; display: grid; }
+.td-player-copy b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ta-body); }
+.td-player-copy small { margin-top: 1px; color: var(--muted); font-size: var(--ta-micro); }
+.td-value {
+  flex: none; min-width: 30px; text-align: center; padding: 3px 6px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-fill) 12%, var(--bg-2));
+  color: var(--accent-2); font-size: var(--ta-small); font-weight: 800;
+}
+.td-empty { padding: 14px; color: var(--muted); font-size: var(--ta-small); }
+
+/* =====================================================================
+   THE DEAL TICKET
+   ---------------------------------------------------------------------
+   What replaced .td-verdict. The trade is a document: two columns totalled
+   like an invoice so "who gave up more" is arithmetic you can see, the call
+   stamped across the middle because it is the answer to the only question
+   this page is asked, and the balance drawn against verdictFor()'s real
+   bands instead of printed as a bare percentage.
+   ===================================================================== */
+.td-who {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+.td-who small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.td-who strong {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: -.025em;
+}
+.td-who > div:first-child span { color: var(--muted); font-size: var(--ta-small); }
+.td-need {
+  flex: none;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+  border-radius: var(--card-radius);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  text-align: right;
+}
+.td-need b { font-family: var(--font-display); font-size: 19px; color: var(--accent); }
+
+.td-ticket {
+  position: relative;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--panel-radius);
+  background: var(--card-surface);
+  box-shadow: var(--card-shadow), inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+}
+[data-td-verdict] { scroll-margin-top: calc(72px + env(safe-area-inset-top)); }
+.td-ticket::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--accent-sweep);
+}
+.td-ticket-head {
+  padding: 4px 0 14px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--text) 18%, transparent);
+  text-align: center;
+}
+.td-ticket-head small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.td-ticket-head h2 {
+  margin: 5px 0 3px;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 4.4vw, 22px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+}
+.td-ticket-head h2 i { color: var(--accent-2); font-style: normal; }
+.td-ticket-head > span { color: var(--muted); font-size: var(--ta-small); }
+.td-ticket.is-idle .td-ticket-head { border-bottom: 0; padding-bottom: 4px; }
+
+/* THE TWO COLUMNS. A dashed rule between them, because the whole point is
+   that it reads as one document rather than two panels. */
+.td-cols { display: grid; grid-template-columns: 1fr 1fr; }
+.td-col { padding: 12px 10px; min-width: 0; }
+.td-col + .td-col { border-left: 1px dashed color-mix(in srgb, var(--text) 18%, transparent); }
+.td-col > small,
+.td-leg > small {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--accent);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.td-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  min-width: 0;
+}
+.td-item b { display: block; font-size: var(--ta-small); font-weight: 700; line-height: 1.3; }
+.td-item small { display: block; color: var(--muted); font-size: var(--ta-micro); }
+.td-item.is-empty b { color: var(--muted); font-weight: 400; font-style: italic; }
+.td-item-value {
+  flex: none;
+  color: var(--body-text);
+  font-size: var(--ta-small);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.td-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+.td-total small {
+  color: var(--muted);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.td-total b {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.td-total b.td-in { color: var(--ok); }
+
+/* Three or more parties stack, because two columns cannot hold a three-way. */
+.td-legs { display: grid; gap: 8px; padding: 12px 0; }
+.td-leg { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--bg-2); }
+
+/* The Trade Lab's suggestion cards still show the call at chip size, which
+   is the right scale for eight offers you are scanning rather than one you
+   are reading. The stamp below is that same word at deciding size. */
+.td-call { display:inline-flex; align-items:center; min-height:24px; padding:4px 8px; border-radius:6px; font-size:var(--ta-micro); font-weight:900; letter-spacing:.08em; }
+.td-call.is-accept { color:var(--ok); background:color-mix(in srgb,var(--ok) 12%,var(--bg-2)); border:1px solid var(--ok-line); }
+.td-call.is-negotiate { color:var(--warn-ink); background:color-mix(in srgb,var(--warn) 11%,var(--bg-2)); border:1px solid var(--warn-line); }
+.td-call.is-pass { color:var(--danger-ink); background:color-mix(in srgb,var(--danger) 10%,var(--bg-2)); border:1px solid var(--danger-line); }
+
+/* THE STAMP. The largest thing on the page, because it is the answer. */
+.td-stamp {
+  margin: 14px 0;
+  padding: 12px;
+  border: 2px solid var(--sl);
+  border-radius: var(--card-radius);
+  background: var(--sb);
+  text-align: center;
+}
+.td-stamp.is-accept    { --sl: var(--ok-line);     --sb: var(--ok-bg);     --sc: var(--ok); }
+.td-stamp.is-pass      { --sl: var(--danger-line); --sb: var(--danger-bg); --sc: var(--danger-ink); }
+.td-stamp.is-negotiate { --sl: var(--warn-line);   --sb: var(--warn-bg);   --sc: var(--warn-ink); }
+.td-stamp strong {
+  display: block;
+  color: var(--sc);
+  font-family: var(--font-display);
+  font-size: clamp(28px, 8vw, 36px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .07em;
+}
+.td-stamp span { display: block; margin-top: 5px; color: var(--body-text); font-size: var(--ta-small); }
+
+.td-lines { display: grid; margin-bottom: 14px; }
+.td-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--ta-body);
+}
+.td-line span { color: var(--muted); min-width: 0; }
+.td-line b {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: var(--ta-lead);
+  font-variant-numeric: tabular-nums;
+}
+.td-line b.is-up { color: var(--ok); }
+.td-line b.is-down { color: var(--danger-ink); }
+
+/* THE BALANCE, AS A BAND. The stops are verdictFor()'s own thresholds -
+   lopsided below 55, clear winner to 72, slight edge to 88, balanced above -
+   so where the needle sits and what the headline calls it cannot disagree.
+   Only the ends are labelled; the band it landed in is already the headline. */
+.td-balance { display: grid; gap: 6px; padding-top: 20px; margin-bottom: 4px; }
+.td-balance-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    var(--danger-bg) 0 55%, var(--warn-bg) 55% 72%,
+    color-mix(in srgb, var(--accent-2) 16%, transparent) 72% 88%, var(--ok-bg) 88% 100%);
+}
+.td-balance-track i {
+  position: absolute;
+  top: -3px;
+  width: 4px;
+  height: 16px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--text);
+  box-shadow: 0 0 0 2px var(--bg-2);
+}
+.td-balance-track i b {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.td-balance-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+/* The builder leads the workflow; its ticket is rendered directly below it. */
+.td-builder { margin: 0 0 14px; border-bottom: 1px solid var(--line); }
+.td-builder > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  color: var(--body-text);
+  font-size: var(--ta-body);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.td-builder > summary::-webkit-details-marker { display: none; }
+.td-builder > summary i {
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform var(--t-fast, 120ms) ease;
+}
+.td-builder[open] > summary i { transform: rotate(-135deg); }
+.td-builder-body { padding-bottom: 8px; }
+
+.td-share { margin-top: 12px; }
+.td-share .btn { width: 100%; min-height: 48px; }
+.td-share .btn:disabled { opacity: .5; }
+
+@media (max-width: 420px) {
+  .td-who { flex-wrap: wrap; padding-inline: 16px; }
+  .td-cols { grid-template-columns: 1fr; }
+  .td-col + .td-col { border-left: 0; border-top: 1px dashed color-mix(in srgb, var(--text) 18%, transparent); }
+  .td-ticket { padding: 14px; }
+}
+
+/* THE DFLYZER. These are sentences with a citation in them, not labels, so
+   they read down one column at a readable size - the previous two-up grid of
+   11px copy was where the reasoning went to be ignored. */
+.td-reasoning { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.td-reasoning h3 {
+  margin: 0 0 2px;
+  color: var(--accent);
+  font-size: var(--ta-micro);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.td-reason {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 11px;
+  align-items: start;
+  padding: 11px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.td-reason > i {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rl);
+  border-radius: 50%;
+  background: var(--rb);
+  color: var(--rc);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+}
+.td-reason.is-good    { --rc: var(--ok);         --rb: var(--ok-bg);     --rl: var(--ok-line); }
+.td-reason.is-bad     { --rc: var(--danger-ink); --rb: var(--danger-bg); --rl: var(--danger-line); }
+.td-reason.is-warn    { --rc: var(--warn-ink);   --rb: var(--warn-bg);   --rl: var(--warn-line); }
+.td-reason.is-neutral { --rc: var(--muted);      --rb: var(--bg-3);      --rl: var(--line); }
+.td-reason strong { display: block; font-size: var(--ta-body); font-weight: 700; line-height: 1.3; }
+.td-reason p { margin: 3px 0 0; color: var(--muted); font-size: var(--ta-small); line-height: 1.5; }
+
+.td-note { margin: 11px 0 0; color: var(--muted); font-size: var(--ta-small); line-height: 1.5; }
+.td-actions { margin-top: 11px; }
+
+.ta-deal-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.ta-shop-controls { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+.ta-shop-controls label { display:grid; gap:4px; min-width:0; }
+.ta-shop-controls label > span { color:var(--muted); font-size:var(--ta-micro); font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.ta-shop-controls select { width:100%; min-width:0; min-height:40px; padding:8px 28px 8px 9px; border:1px solid var(--line); border-radius:9px; background:var(--bg-3); color:var(--text); font:inherit; }
+.ta-deal-card { display:grid; gap:11px; padding:13px; border:1px solid var(--line-soft); border-radius:12px; background:var(--bg-3); }
+.ta-deal-card > header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.ta-deal-card > header small,.ta-deal-flow small { display:block; color:var(--muted); font-size:var(--ta-micro); letter-spacing:.05em; text-transform:uppercase; }
+.ta-deal-card > header strong { display:block; margin-top:2px; font-size:var(--ta-body); }
+.ta-deal-flow { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:8px; }
+.ta-deal-flow > div { min-width:0; }
+.ta-deal-flow b { display:block; margin-top:3px; font-size:var(--ta-small); overflow-wrap:anywhere; }
+.ta-deal-flow > i { color:var(--accent-2); font-style:normal; font-weight:900; }
+.ta-deal-card dl { display:flex; gap:18px; margin:0; padding-top:9px; border-top:1px solid var(--line-soft); }
+.ta-deal-card dl div { display:grid; gap:2px; }
+.ta-deal-card dt { color:var(--muted); font-size:var(--ta-micro); text-transform:uppercase; }
+.ta-deal-card dd { margin:0; font-size:var(--ta-small); font-weight:800; }
+.ta-deal-card dd.positive { color:var(--ok); }
+.ta-deal-card dd.negative { color:var(--danger); }
+.ta-deal-card .btn { justify-self:start; }
+
+@media (max-width: 680px) {
+  .td-board, .td-board.is-multi, .ta-deal-grid { grid-template-columns: minmax(0, 1fr); }
+  .ta-shop-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+/* =====================================================================
+   TRENDS - the multi-season record
+   ---------------------------------------------------------------------
+   One row per player: who, the shape, the reading, the caveats. The
+   sparkline carries the shape and the numbers carry the detail, because
+   a sparkline alone cannot be read precisely and numbers alone cannot be
+   read at a glance.
+   ===================================================================== */
+
+/* The host reserves its space before the fetch lands. An empty div has zero
+   height, which gave the IntersectionObserver nothing to observe, and it also
+   meant the section jumped when the rows arrived. */
+[data-trend-panel]:empty { display: block; min-height: 120px; }
+.tp-intro, .tp-loading { margin: 0 0 9px; color: var(--muted); font-size: var(--ta-small); line-height: 1.5; }
+.tp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+/* One line per player: who, shape, reading, tags - not four stacked. */
+.tp-row {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) 74px auto minmax(0, 1fr);
+  align-items: center; gap: 10px; padding: var(--card-pad);
+  border: 1px solid var(--card-line); border-radius: var(--card-radius); background: var(--card-bg);
+}
+.tp-who { min-width: 0; }
+.tp-who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ta-body); }
+.tp-who small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--ta-micro); }
+
+.tp-spark-wrap { color: var(--muted); }
+.tp-spark { display: block; width: 78px; height: 26px; }
+/* The line takes the direction's colour; the words repeat it for anyone who
+   cannot separate these hues. */
+.tp-row.is-up .tp-spark-wrap, .tp-row.is-up .tp-dir { color: var(--ok); }
+.tp-row.is-down .tp-spark-wrap, .tp-row.is-down .tp-dir { color: var(--danger); }
+.tp-row.is-flat .tp-spark-wrap, .tp-row.is-flat .tp-dir { color: var(--accent-2); }
+.tp-row.is-unknown .tp-spark-wrap, .tp-row.is-unknown .tp-dir { color: var(--muted); }
+
+.tp-read { min-width: 0; }
+.tp-dir { font-size: var(--ta-body); font-weight: 800; }
+.tp-read small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--ta-micro); overflow-wrap: anywhere; }
+
+.tp-tags { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; min-width: 0; }
+.tp-tag, .tp-latest {
+  display: inline-block; padding: 3px 7px; border-radius: 999px;
+  font-size: var(--ta-micro); font-weight: 800; white-space: nowrap;
+  border: 1px solid var(--line);
+}
+.tp-latest { color: var(--muted); }
+.tp-tag.is-swing { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.tp-tag.is-risk  { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.tp-tag.is-hot   { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tp-tag.is-cold  { color: var(--muted); }
+.tp-tag.is-mixed { color: var(--muted); }
+
+@media (max-width: 680px) {
+  /* Name and sparkline share a line; the reading and the tags share the next.
+     Four stacked blocks was 141px a player for a list of thirteen. */
+  .tp-row { grid-template-columns: minmax(0, 1fr) 70px; gap: 4px 10px; }
+  .tp-read { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; }
+  .tp-read small { margin-top: 0; }
+  .tp-tags { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+/* =====================================================================
+   SEASON OUTLOOK - what the roster is likely to buy
+   ---------------------------------------------------------------------
+   The first card on the page, and deliberately the most compact one on
+   it. The record sits in the header beside the team name rather than in
+   a block of its own, and the three odds are one row. Everything the
+   card has to say fits on a phone screen without scrolling, which is the
+   whole point of putting it first.
+   ===================================================================== */
+
+.so-panel {
+  overflow: hidden; margin: 0 0 var(--s-4);
+  border: 1px solid var(--line); border-radius: var(--panel-radius);
+  background: var(--bg-2); box-shadow: var(--shadow);
+}
+.so-head {
+  display: flex; align-items: center; justify-content: flex-start; gap: 16px;
+  padding: 16px 20px; border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+}
+.so-head small { color: var(--accent-2); font-size: var(--ta-micro); font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.so-head h2 { margin: 3px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 22px; letter-spacing: -.02em; }
+/* The record lives in the header - it is the headline, not a section. */
+.so-record { flex: none; text-align: left; padding-left: 16px; border-left: 1px solid var(--line-soft); }
+.so-record strong { display: block; font-family: var(--font-display); font-size: 38px; line-height: .9; letter-spacing: -.04em; }
+.so-record strong i { font-style: normal; color: var(--muted); margin: 0 1px; }
+.so-record span { display: block; margin-top: 3px; color: var(--muted); font-size: var(--ta-micro); }
+
+.so-body { display: grid; gap: 10px; padding: 14px 20px 16px; }
+.so-summary { margin: 0; font-size: var(--ta-body); line-height: 1.45; }
+/* Sleeper's raw number next to the blended one this report actually uses.
+   Where they disagree is worth seeing rather than hiding behind a method note. */
+.so-source { margin: 0; color: var(--muted); font-size: var(--ta-small); line-height: 1.45; }
+.so-source b { color: var(--text); font-weight: 800; }
+
+.so-odds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.so-odd { min-width: 0; padding: var(--card-pad); border-radius: var(--card-radius); border: 1px solid var(--card-line); background: var(--card-bg); }
+.so-odd small { display: block; color: var(--muted); font-size: var(--ta-micro); text-transform: uppercase; letter-spacing: .04em; }
+.so-odd b { display: block; margin: 2px 0 0; font-family: var(--font-display); font-size: 24px; line-height: 1; }
+.so-odd i { font-style: normal; color: var(--muted); font-size: var(--ta-micro); }
+.so-odd.is-title { border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+.so-odd.is-title b { color: var(--ok); }
+.so-odd.is-chip { border-color: color-mix(in srgb, var(--danger) 40%, var(--line)); }
+.so-odd.is-chip b { color: var(--danger); }
+
+.so-field { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.so-field div { min-width: 0; display: flex; align-items: baseline; gap: 7px; }
+.so-field dt { flex: none; color: var(--muted); font-size: var(--ta-micro); text-transform: uppercase; letter-spacing: .04em; }
+.so-field dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ta-small); font-weight: 700; }
+
+/* The footnote is a footnote: no border, no bar, just a disclosure. */
+.so-method { padding: 0; border: 0; background: none; }
+
+@media (max-width: 680px) {
+  .so-head { padding: 14px; }
+  .so-head h2 { font-size: 19px; }
+  .so-record strong { font-size: 32px; }
+  .so-body { padding: 12px 14px 14px; }
+  .so-odd { padding: 8px 9px; }
+  .so-odd b { font-size: 20px; }
+  .so-field { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+}
+
+/* Three grades in one cell, so the projected table loses two columns. */
+.ta-gradeset { display: inline-flex; gap: 5px; }
+.ta-gradeset b {
+  min-width: 30px; text-align: center; padding: 3px 6px; border-radius: 7px;
+  background: var(--bg-2); border: 1px solid var(--line-soft);
+  font-size: var(--ta-small); font-weight: 800;
+}
+.ta-gradeset b.is-elite { color: var(--ok); }
+.ta-gradeset b.is-good { color: var(--accent-2); }
+.ta-gradeset b.is-average { color: var(--warn); }
+.ta-gradeset b.is-weak { color: var(--danger); }
+
+@media (max-width: 680px) {
+  .so-odds { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .so-odd { padding: 9px 8px; }
+  .so-odd b { font-size: 21px; }
+  .so-field { grid-template-columns: minmax(0, 1fr); }
+  .so-record strong { font-size: 34px; }
+}
+
+/* The board can be two full rosters long now, so the verdict gets a shortcut. */
+.td-jump { margin: 0 0 10px; font-size: var(--ta-small); }
+.td-jump a { color: var(--accent-2); font-weight: 700; }

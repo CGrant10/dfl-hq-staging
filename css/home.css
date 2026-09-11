@@ -1,0 +1,1146 @@
+/* =====================================================================
+   home.css - the front page's layout, and the surfaces that carry a
+   member's identity.
+   ---------------------------------------------------------------------
+   WHY THIS FILE EXISTS. Home's layout was spread across four
+   stylesheets: the doors in style.css, the snapshot in ui.css, the
+   activity rows in screens.css, and - least defensibly - a block of
+   positional `display:none` overrides in splash-loading.css that hid two
+   sections the page was still rendering. Changing one thing about this
+   page meant finding which of the four owned it, and the positional
+   selectors broke the moment the markup moved.
+
+   Everything that is specifically about #home-wrap now lives here. This
+   file is loaded last, so it wins without needing !important.
+
+   THE RHYTHM IS ONE VARIABLE. --home-gap sets the space between every
+   band on the page and tightens on small screens, so the page stays
+   dense on a phone and never drifts apart on a monitor.
+
+   THE ACCENT IS ALWAYS --ident, NEVER A THEME TOKEN. Each member's
+   chosen colour is set as an inline --ident on their own post or pill
+   rail and read only from inside it, so twelve members' colours can
+   coexist without any of them touching the app's chrome.
+   ===================================================================== */
+
+#home-wrap {
+  --home-gap: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--home-gap);
+}
+
+/* The bands set their own spacing above, so the generic block margins
+   that applied when this page was a stack of cards are cancelled. */
+#home-wrap > *,
+#home-wrap .home-lower > * { margin-top: 0; margin-bottom: 0; }
+
+/* ---------------------------------------------------------------------
+   THE SNAPSHOT - four figures, and all four survive now.
+
+   The old override hid the fourth cell and forced three columns, because
+   at two-up the labels wrapped. Two rows of two is the honest answer on a
+   narrow screen: every figure keeps its place and nothing is truncated.
+   --------------------------------------------------------------------- */
+#home-wrap .fp-snap {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+#home-wrap .fp-snap > a { padding: var(--s-3); min-width: 0; }
+#home-wrap .fp-snap b,
+#home-wrap .fp-snap small {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (min-width: 560px) {
+  #home-wrap .fp-snap { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* ---------------------------------------------------------------------
+   THE CREED DOORS - the navigation.
+
+   Four across is right down to about 380px, below which the words start
+   to crush. Two-by-two keeps DRAFT/GOLF/SIN/FOLD readable and each tap
+   target comfortably over 44px instead of shrinking them all to fit.
+   --------------------------------------------------------------------- */
+#home-wrap .creed-doors {
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 380px) {
+  #home-wrap .creed-doors { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+#home-wrap .cdoor { padding: var(--s-3) var(--s-2); min-height: 56px; }
+#home-wrap .cd-sub {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------
+   THE LOWER HALF - two columns once there is room for them.
+
+   The container is 900px, so past ~760px a single column leaves half the
+   width empty and pushes the crest below a second scroll. The
+   commissioner and the activity feed are both short lists and sit
+   happily side by side. align-items:start stops the shorter of the two
+   from stretching to match the taller.
+   --------------------------------------------------------------------- */
+.home-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--home-gap);
+  align-items: start;
+}
+@media (min-width: 760px) {
+  .home-lower { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* A feed that returned nothing renders no element at all, so the single
+   remaining child must not be left sitting in a half-width column. */
+.home-lower > :only-child { grid-column: 1 / -1; }
+
+/* ---------------------------------------------------------------------
+   THE WALL
+   --------------------------------------------------------------------- */
+.wall .wall-card { padding: var(--s-4); display: grid; gap: var(--s-4); }
+.wall-signin { margin: 0; }
+
+.wall-form { display: grid; gap: var(--s-2); }
+.wall-form textarea {
+  width: 100%;
+  min-height: 62px;
+  resize: vertical;
+  font: inherit;
+}
+/* The picture is the shared image field with the broadcast's crop surface on
+   it (see WALL_FRAMING in js/member-wall.js), so there is nothing to style
+   here but the heading above it - and the frame it draws is the shape the
+   posted photo is drawn in below. */
+.wall-picture { display: grid; gap: 6px; }
+.wall-picture-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fs-micro); color: var(--muted);
+}
+/* The field's own "shrunk on your device" line already says what the old note
+   beside the button said, and twice is noise. */
+.wall-picture .imgf-hint { margin-top: 4px; }
+
+.wall-actions {
+  display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap;
+}
+.wall-send { margin-left: auto; }
+@media (max-width: 380px) {
+  .wall-send { margin-left: 0; flex: 1 1 auto; }
+}
+
+.wall-posts { display: grid; gap: 0; }
+.wall-empty { margin: 0; }
+
+.wall-post {
+  --ident: var(--muted);
+  padding: var(--s-3) 0 var(--s-3) var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  /* The member's colour as a hairline down the left edge: enough to tell
+     two people's posts apart while scrolling, not enough to become the
+     loudest thing in the card. */
+  border-left: 2px solid var(--ident);
+}
+.wall-post:first-child { border-top: 0; }
+
+/*
+  THREE ITEMS ON THE TOP LINE, AND THE BYLINE UNDERNEATH ALL OF THEM.
+
+  The byline used to be the second line of the name column, which on a
+  375px phone is 161px - and a title, a club and an achievement need about
+  213, so all three truncated at once. Its own row starting in the name
+  column spans the name and the timestamp together (~263px at that width),
+  which fits, and it stays visually indented under the name rather than
+  under the avatar.
+*/
+.wall-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "av name time";
+  align-items: center;
+  gap: 2px var(--s-2);
+  margin-bottom: var(--s-2);
+}
+.wall-head.has-byline { grid-template-areas: "av name time" ". byline byline"; }
+/*
+  ON A NARROW SCREEN THE BYLINE TAKES THE WHOLE WIDTH, avatar column
+  included. Indented under the name it gets 263px at 375px wide and a
+  title-plus-club-plus-achievement needs about 274, so it wrapped for the
+  sake of a 32px indent. Full width fits the common case on one line; a
+  longer achievement still wraps, which is the point of allowing it to.
+*/
+@media (max-width: 480px) {
+  .wall-head.has-byline { grid-template-areas: "av name time" "byline byline byline"; }
+}
+.wall-avatar { grid-area: av; }
+.wall-name { grid-area: name; }
+.wall-when { grid-area: time; }
+.wall-head .identity-byline { grid-area: byline; }
+.wall-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  object-fit: cover; flex: 0 0 auto;
+  border: 1px solid var(--line);
+}
+.wall-avatar-fallback {
+  display: grid; place-items: center;
+  background: var(--bg-3); color: var(--muted);
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+}
+/* .wall-who is gone: it existed only to stack the name and the byline in one
+   grid cell, which is the constraint that squeezed the byline. */
+.wall-name {
+  font-weight: var(--fw-bold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wall-when { white-space: nowrap; align-self: start; }
+
+.wall-body {
+  margin: 0 0 var(--s-2);
+  font-size: var(--fs-body); color: var(--body-text);
+  /* Posts are typed by hand, so a pasted URL must wrap rather than push
+     the card sideways, and deliberate line breaks are kept. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* An UNFRAMED post - anything from before the crop tool. Untouched: it is
+   drawn at its natural shape the way it always was, and only the max-height
+   crops, which is exactly the behaviour the framed box below replaces. */
+.wall-photo {
+  display: block; width: 100%; height: auto;
+  max-height: 340px; object-fit: cover;
+  border-radius: var(--r-md); border: 1px solid var(--line);
+}
+@media (min-width: 760px) { .wall-photo { max-height: 460px; } }
+
+/* The edit form. It was a textarea and two buttons with no styling of its own;
+   now it holds the same picture control the composer does, so it needs the same
+   gap or the crop surface sits on top of the words. */
+.wall-edit { display: grid; gap: var(--s-2); margin-bottom: var(--s-2); }
+.wall-edit.hidden { display: none; }
+.wall-edit textarea { width: 100%; resize: vertical; font: inherit; }
+
+/* A FRAMED post. The box is the one the picture was dragged in, so the aspect
+   here and WALL_PHOTO_ASPECT in js/member-wall.js are the same number - a crop
+   made in one shape and shown in another is not a crop, it is a surprise.
+   Capped and centred rather than stretched: a 4/5 box at the full width of a
+   desktop card would be 700px of photograph. */
+.wall-photo-frame {
+  overflow: hidden;
+  width: 100%; max-width: 340px; margin-inline: auto;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--r-md); border: 1px solid var(--line);
+  /* Shows through wherever "Show all of it" letterboxes the picture. */
+  background: var(--bg-3);
+}
+/* object-fit and object-position come from the row, inline, via artworkStyle();
+   the scale is the zoom, about that same point. */
+.wall-photo-framed { display: block; width: 100%; height: 100%; }
+
+.wall-submit {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: var(--s-2);
+}
+.wall-submit.is-sent { color: var(--muted); pointer-events: none; }
+
+/* ---------------------------------------------------------------------
+   IDENTITY - the byline on a post, the pills on a profile.
+   --------------------------------------------------------------------- */
+/*
+  IT WRAPS RATHER THAN CLIPS. Every item used to carry overflow:hidden and
+  an ellipsis, so a byline one pixel too wide truncated all three at once
+  into "DFL Ch… CHI 4 playo…" - three half-words, which is worse than two
+  lines. Nothing here truncates now; the row wraps between items instead,
+  and each item keeps white-space:nowrap so a phrase never breaks mid-way.
+*/
+.identity-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  font-weight: var(--fw-bold);
+  color: var(--ident, var(--muted));
+}
+.identity-byline > * { white-space: nowrap; }
+.ib-title { display: inline-flex; align-items: center; gap: 4px; }
+.ib-team { display: inline-flex; align-items: center; gap: 4px; }
+.ib-feat { font-weight: var(--fw-semi, 600); letter-spacing: var(--ls-wide); opacity: .9; }
+
+/*
+  THE SPACER IS A ::before ON EVERY ITEM BUT THE FIRST.
+
+  A diamond rather than whitespace: at 11px uppercase, three grey fragments
+  separated by spaces read as one string. As its own element it was a flex
+  item that a wrap could push to the start of the next line on its own,
+  which reads as a bullet. Attached to the item it precedes, it always
+  wraps with it.
+
+  It is decoration, so it stays out of the accessibility tree - and the
+  explicit text-fill guards it against inheriting a gradient clip from a
+  champion or club treatment.
+*/
+.identity-byline > * + *::before {
+  /* The literal glyph, NOT a CSS unicode escape. A scripted edit collapsed
+     the escape for this character into a raw 0x15 control byte, which drew
+     a tofu box wide enough to push the byline onto two lines - the exact
+     problem this spacer was being reworked to fix. A literal character has
+     no escaping layer left to get wrong. */
+  content: "◆";
+  margin-right: 5px;
+  font-size: .68em;
+  vertical-align: .1em;
+  opacity: .45;
+  color: var(--ident, var(--muted));
+  -webkit-text-fill-color: currentColor;
+}
+
+/* ---------------------------------------------------------------------
+   THE CHAMPION TREATMENT
+
+   A ring is the only thing in the identity set that is not taste, so it
+   is the only thing that ignores the member's accent colour. Gold, a
+   trophy, and a slow sheen that crosses the text.
+
+   The gradient is painted onto the text itself via background-clip, with
+   an explicit colour fallback first: a browser without -webkit-text-fill
+   -color shows solid gold rather than invisible text.
+   --------------------------------------------------------------------- */
+.ib-title.is-champion,
+.idp.is-title.is-champion {
+  /* Every stop clears 4.5:1 on the #131a24 card. The darkest was #8a6a1f
+     at 3.47:1, which put the ends of the sweep below the floor. */
+  --gold-1: #a17d25;   /* 4.56:1 */
+  --gold-2: #f7e08a;   /* 13.3:1 */
+  --gold-3: #d4af37;   /* 8.32:1 */
+  color: var(--gold-3);
+}
+/*
+  :not(.idp-rings) BECAUSE THE PILL HAS TWO CHILD SPANS.
+
+  One holds the title text; the other is the trophy wrapper, which holds
+  glyphs and no text at all. Clipping a gradient to the text of an element
+  with no text paints nothing in dark mode - invisible, so nobody noticed -
+  but the moment the clip was lost in light mode it became a 12x12 gold
+  square sitting next to the title.
+*/
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .ib-title.is-champion > span:not(.idp-rings),
+  .idp.is-title.is-champion > span:not(.idp-rings) {
+    background: linear-gradient(100deg,
+      var(--gold-1) 0%, var(--gold-3) 26%, var(--gold-2) 44%,
+      #fffbe8 50%, var(--gold-2) 56%, var(--gold-3) 74%, var(--gold-1) 100%);
+    background-size: 280% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: champ-sheen 5.5s var(--ease, ease-in-out) infinite;
+  }
+}
+/* The trophy keeps a solid fill - a 12px glyph with a gradient clipped
+   through it just looks muddy. */
+.ib-title.is-champion .ico,
+.idp.is-title.is-champion .ico {
+  color: var(--gold-2);
+  filter: drop-shadow(0 0 3px rgba(212, 175, 55, .55));
+}
+/*
+  THE RINGS MUST NOT BE SHRUNK AWAY. The pill is a flex row that ellipsises
+  a long title, and an <svg> is a flex item like any other: on a narrow
+  phone the browser took the 13px it needed out of the trophy first and the
+  glyph collapsed to nothing, which is exactly "the trophy does not show".
+  flex none on the row and on each glyph makes the title the only thing
+  that gives way.
+*/
+.idp-rings {
+  display: inline-flex; align-items: center; gap: 1px;
+  flex: none;
+}
+.idp-rings .ico,
+.ib-title .ico,
+.idp .ico { flex: none; }
+.idp.is-title.is-champion {
+  background: linear-gradient(180deg, rgba(212,175,55,.14), rgba(212,175,55,.05));
+}
+
+/*
+  LIGHT MODE NEEDS A DARKER RAMP.
+
+  The gold above is tuned for a #131a24 card. Light mode's card is pure
+  white, where #d4af37 is about 1.9:1 and the sheen's #fffbe8 peak is
+  white-on-white - the title would fade out every few seconds. These stops
+  run dark enough to stay readable across the whole sweep: the highlight is
+  a muted #8a6a1f (5.05:1 on white) rather than a near-white, so the sheen
+  is deliberately subtler here. Legible beats shiny.
+*/
+[data-mode="light"] .ib-title.is-champion,
+[data-mode="light"] .idp.is-title.is-champion {
+  /* Every stop clears 4.5:1 on white. The old peak was #b08a1e at 3.23:1. */
+  --gold-1: #4a3a0c;   /* 11.0:1 */
+  --gold-2: #7d5f14;   /* 5.97:1 */
+  --gold-3: #6d5311;   /* 7.25:1 */
+  color: var(--gold-3);
+}
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  [data-mode="light"] .ib-title.is-champion > span:not(.idp-rings),
+  [data-mode="light"] .idp.is-title.is-champion > span:not(.idp-rings) {
+    background: linear-gradient(100deg,
+      var(--gold-1) 0%, var(--gold-3) 26%, var(--gold-2) 44%,
+      #8a6a1f 50%, var(--gold-2) 56%, var(--gold-3) 74%, var(--gold-1) 100%);
+    background-size: 280% 100%;
+    /*
+      RE-DECLARED, AND IT HAS TO BE. `background` is the SHORTHAND, so the
+      line above resets background-clip to border-box - while
+      -webkit-text-fill-color: transparent survives from the rule this is
+      overriding. The result was invisible text on a painted box: the
+      champion title rendered as a solid gold block in light mode and only
+      in light mode. The team pill below re-declares it for the same reason.
+    */
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+}
+[data-mode="light"] .ib-title.is-champion .ico,
+[data-mode="light"] .idp.is-title.is-champion .ico {
+  color: var(--gold-3);
+  filter: none;
+}
+[data-mode="light"] .idp.is-title.is-champion {
+  background: linear-gradient(180deg, rgba(154,116,25,.13), rgba(154,116,25,.05));
+}
+
+@keyframes champ-sheen {
+  0%,  100% { background-position:   0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* A moving highlight on a permanent badge is exactly the kind of thing
+   that has to stop when somebody has asked for less motion. The gold
+   stays; only the travel goes. */
+@media (prefers-reduced-motion: reduce) {
+  .ib-title.is-champion > span:not(.idp-rings),
+  .idp.is-title.is-champion > span:not(.idp-rings) {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}
+
+.identity-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: var(--s-2) 0 var(--s-3);
+}
+.idp {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-wide);
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+  color: var(--body-text);
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/*
+  WHO GETS WHICH COLOUR, and this is the whole rule:
+
+    title (not a ring)  the member's accent - they chose it, so it is theirs
+    title (a ring)      gold, further down. Not a matter of taste.
+    featured            the member's accent, same reasoning as the title
+    club                that club's OWN two colours as a gradient. Which
+                        team somebody supports is a fact, not a preference
+                        about colour, so it does not take the accent.
+*/
+/* The COLOUR is the identity; the edge is the same grey as every card.
+   Three differently-tinted outlines in a row read as three unrelated
+   widgets rather than one rail of facts. */
+.idp.is-title {
+  color: var(--ident, var(--text));
+  background: transparent;
+}
+.idp.is-feat { color: var(--ident, var(--text)); }
+
+/* ---------------------------------------------------------------------
+   THE CLUB BADGE - the team's own gradient.
+
+   --t1/--t2 (dark) and --t1l/--t2l (light) are set inline per club by
+   teamGradientVars(), already lifted for the ground they land on: a raw
+   club colour is unreadable about a third of the time, and CSS cannot run
+   that lift per theme. Painted through the text the same way the champion
+   gold is, so the two treatments are one mechanism.
+
+   The gradient goes on the inner <span>, not the pill, so the logo beside
+   it keeps its own colours.
+   --------------------------------------------------------------------- */
+.idp.is-team,
+.ib-team { color: var(--t1, var(--text)); }
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .idp.is-team > span,
+  .ib-team > span {
+    background: linear-gradient(92deg, var(--t1, currentColor), var(--t2, currentColor));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  [data-mode="light"] .idp.is-team > span,
+  [data-mode="light"] .ib-team > span {
+    background: linear-gradient(92deg, var(--t1l, currentColor), var(--t2l, currentColor));
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+}
+[data-mode="light"] .idp.is-team,
+[data-mode="light"] .ib-team { color: var(--t1l, var(--text)); }
+
+/* The club's gradient is on its text and its logo sits beside it, which is
+   plenty - the edge stays grey like everything else. */
+
+/* ---------------------------------------------------------------------
+   THE IDENTITY EDITOR
+   --------------------------------------------------------------------- */
+.identity-editor { display: grid; gap: var(--s-3); margin: var(--s-3) 0; }
+.ident-head { display: grid; gap: 2px; }
+.ident-grid {
+  display: grid; gap: var(--s-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 560px) {
+  .ident-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.ident-team-row { display: flex; align-items: center; gap: var(--s-2); }
+.ident-team-row select { flex: 1 1 auto; min-width: 0; }
+.ident-team-logo:empty { display: none; }
+
+.ident-swatches { display: flex; flex-wrap: wrap; gap: 7px; }
+.ident-swatch {
+  width: 30px; height: 30px; padding: 0;
+  border-radius: 50%;
+  background: var(--sw);
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--line) inset;
+  cursor: pointer;
+}
+/* The ring is drawn outside the swatch so selecting one does not change
+   its size and shuffle the row. */
+.ident-swatch.on {
+  border-color: var(--bg-2);
+  box-shadow: 0 0 0 2px var(--text);
+}
+.ident-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.ident-preview { display: grid; gap: 4px; }
+.ident-preview-line {
+  padding: var(--s-2) var(--s-3);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  min-height: 34px;
+  display: flex; align-items: center;
+}
+
+/* ---------------------------------------------------------------------
+   SHARED: the SVG glyph set and the club logos.
+   --------------------------------------------------------------------- */
+/* Icons sit on the text baseline the way a glyph does, and inherit colour,
+   which is the whole reason they replaced the emoji. */
+.ico {
+  display: inline-block;
+  vertical-align: -0.14em;
+  flex: 0 0 auto;
+}
+
+/* =====================================================================
+   THE ICON SET CARRIES THE GRADIENT.
+   ---------------------------------------------------------------------
+   An SVG cannot take a CSS gradient the way text can, so the glyphs point
+   at the <linearGradient> defined at the top of index.html, whose stops
+   are the palette pair below.
+
+   THE TWO SELECTORS ARE PRECISE ON PURPOSE:
+
+     .ico             sets fill on the SVG ROOT only. A path with no fill
+                      attribute inherits the gradient; a path carrying
+                      fill="none" keeps its own value, so outline glyphs
+                      are not flooded solid.
+     [stroke=...]     only paths that actually stroke in currentColor are
+                      re-pointed, so nothing else is touched.
+
+   A blanket `fill` on every descendant would have filled in every hollow
+   icon in the set.
+   ===================================================================== */
+.dfl-ico-stop-a { stop-color: var(--accent-fill); }
+.dfl-ico-stop-b { stop-color: var(--accent-2-fill); }
+
+/*
+  A TROPHY IS ALWAYS GOLD, wherever it turns up - the profile, the Arena
+  winner card, the results table, a champion byline. Four stops rather than
+  two so it reads as metal: dark edge, bright face, a highlight across the
+  middle, dark edge again.
+*/
+.dfl-gold-a { stop-color: #8a6a1f; }
+.dfl-gold-b { stop-color: #f0d478; }
+.dfl-gold-c { stop-color: #fffbe8; }
+.dfl-gold-d { stop-color: #b8912c; }
+
+/*
+  BRUSHED STEEL, for the shell glyphs - the tab bar and the More sheet.
+
+  Same four-stop recipe as the gold above and for the same reason: a dark
+  top edge, a bright band across the upper middle, a mid tone, a dark
+  bottom edge. Two stops read as a flat tint; four read as a lit surface.
+  The gradient runs vertically (y 0 -> 1 in the defs) rather than on the
+  diagonal, because a horizon-parallel highlight is what makes a small
+  glyph look like metal instead of like a colour wash.
+
+  These are the SHELL icons only. Content icons keep --accent-fill through
+  #dfl-ico-grad: the palette still belongs to the app, and turning every
+  glyph to metal would take the colour out of the parts that use it to
+  mean something.
+*/
+.dfl-steel-a { stop-color: #cfd8e6; }
+.dfl-steel-b { stop-color: #ffffff; }
+.dfl-steel-c { stop-color: #aab6c8; }
+.dfl-steel-d { stop-color: #76839a; }
+
+/*
+  A LIGHT BAR NEEDS DARK METAL. Polished silver on a white surface is the
+  same problem as white text on white: the highlight band disappears and
+  the glyph loses its shape. These are gunmetal - the same ramp, moved
+  down until the darkest stop reads on --bg-2.
+*/
+[data-mode="light"] .dfl-steel-a { stop-color: #63708a; }
+[data-mode="light"] .dfl-steel-b { stop-color: #98a6bd; }
+[data-mode="light"] .dfl-steel-c { stop-color: #55617a; }
+[data-mode="light"] .dfl-steel-d { stop-color: #333c4e; }
+
+.ico { fill: url(#dfl-ico-grad); }
+.ico [stroke="currentColor"] { stroke: url(#dfl-ico-grad); }
+
+/*
+  AND WHERE A GLYPH MUST KEEP ITS OWN COLOUR.
+
+  On a filled button or a coloured pill the icon has to be the ink that
+  reads on THAT background, not the palette pair - a navy-to-orange camera
+  on a navy-to-orange button is invisible. The champion trophy is gold
+  because a ring is gold, and the chip is the warn amber.
+*/
+.btn .ico,
+.ph-photo-btn .ico,
+.choice.is-primary .choice-ico .ico,
+.wall-submit .ico,
+.is-champion .ico,
+.chip-badge .ico,
+.pill .ico,
+.badge .ico,
+.ka-headline .ico,
+.mode-opt.is-on .ico,
+.tabs button.on .ico { fill: currentColor; }
+
+.btn .ico [stroke="currentColor"],
+.ph-photo-btn .ico [stroke="currentColor"],
+.choice.is-primary .choice-ico .ico [stroke="currentColor"],
+.wall-submit .ico [stroke="currentColor"],
+.is-champion .ico [stroke="currentColor"],
+.chip-badge .ico [stroke="currentColor"],
+.pill .ico [stroke="currentColor"],
+.badge .ico [stroke="currentColor"],
+.ka-headline .ico [stroke="currentColor"],
+.mode-opt.is-on .ico [stroke="currentColor"],
+.tabs button.on .ico [stroke="currentColor"] { stroke: currentColor; }
+
+/*
+  AND THE TROPHY OVERRIDES ALL OF THAT. It is gold in every context,
+  including the ones that force currentColor for contrast - a trophy on a
+  filled button is still a trophy. Last in the file so it wins on order
+  without needing !important.
+*/
+.ico-trophy,
+.ico-trophy [stroke="currentColor"],
+.btn .ico-trophy,
+.pill .ico-trophy,
+.badge .ico-trophy,
+.is-champion .ico-trophy { fill: #f6d35c; }
+.ico-trophy [stroke="currentColor"],
+.btn .ico-trophy [stroke="currentColor"],
+.pill .ico-trophy [stroke="currentColor"],
+.badge .ico-trophy [stroke="currentColor"],
+.is-champion .ico-trophy [stroke="currentColor"] { stroke: #f6d35c; }
+/* Solid shiny gold, not a gradient - a gradient clipped through a small
+   glyph reads muddy. The glow is what makes it shiny rather than flat. */
+.ico-trophy {
+  filter: drop-shadow(0 0 2px rgba(255, 226, 120, .7))
+          drop-shadow(0 1px 1px rgba(120, 88, 16, .55));
+}
+.nfl-logo {
+  display: inline-block;
+  vertical-align: -0.2em;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+/* The presence line is an icon plus words, so it needs to be a flex row
+   rather than a text node with a glyph in it. */
+.dfl-alive {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.dfl-alive:empty { display: none; }
+
+/* ---------------------------------------------------------------------
+   TIGHTEN UP ON SMALL SCREENS, OPEN UP ON LARGE ONES.
+   --------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  #home-wrap { --home-gap: var(--s-4); }
+  #home-wrap .section-title { margin-bottom: var(--s-2); }
+  .wall .wall-card { padding: var(--s-3); }
+}
+@media (min-width: 900px) {
+  #home-wrap { --home-gap: var(--s-6); }
+}
+
+/* The crest closes the page; it does not need the full band of space
+   above it that separates two lists of content. */
+#home-wrap .hero { margin-top: var(--s-2); }
+#home-wrap .version-line { margin-top: 0; }
+
+/* ---------------------------------------------------------------------
+   THE DRAFT BOARD - where each team picks from this year.
+
+   EVERY COLOUR HERE IS A TOKEN, and the reason is that there are six
+   themes plus a palette per team. --accent and --accent-2 are TEXT and are
+   already lifted or deepened to stay legible in whichever mode is on;
+   --accent-fill and --accent-sweep are the crest's true colours and are
+   for fills only, with --on-accent over the top. That is the rule at the
+   head of css/style.css, and it is what lets this card be red on the crest
+   theme, green on Fairway and the wheel's red on Medicine without a single
+   line of per-theme CSS.
+
+   Accent is spent in exactly three places - the figure, the reader's own
+   row, and that row's slot chip. Everything else is ink and ground, so the
+   one row that matters is the one thing the eye lands on.
+   --------------------------------------------------------------------- */
+#home-wrap .do-card { padding-top: var(--s-3); }
+
+/*
+  THE BODY IS A FLEX COLUMN, and that is a spacing fix rather than a layout
+  one. As a block container it stacked anonymous line boxes out of the
+  whitespace between the template's chunks - the newline and indentation
+  between ${hero} and ${picks} is a text node, and a text node in a block
+  context gets a line box with full leading. That was 37px of invisible type
+  on top of the 20px of margin actually asked for, which is why the card read
+  as three things adrift rather than one card.
+
+  A flex container drops whitespace-only children, so the gap below is the
+  whole story and every space on this card is now a number in this file.
+*/
+#home-wrap .do-card .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+#home-wrap .draft-order .do-season {
+  margin-left: var(--s-2);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-wide);
+  color: var(--muted);
+}
+
+/* ---- the figure ---------------------------------------------------- */
+#home-wrap .do-hero {
+  display: flex; align-items: center; gap: var(--s-3);
+  min-width: 0;
+}
+#home-wrap .do-figure {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+#home-wrap .do-hero-text {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+#home-wrap .do-label {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text);
+}
+#home-wrap .do-meta {
+  margin: 0;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-wide);
+  color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ---- when you are on the clock ------------------------------------- */
+/* Three cells, evenly split. Equal columns rather than content width, so
+   pick 7 and pick 131 do not make the row lurch about. */
+/* Flex with an equal basis rather than a fixed three-column grid: a
+   two-round draft gets two cells that still fill the row, instead of two
+   cells and a dead third column. */
+#home-wrap .do-picks {
+  display: flex;
+  gap: var(--s-2);
+  /* No margin: the body's gap owns the space between sections now. The
+     padding is the band's own, inside its two rules. */
+  margin: 0;
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+#home-wrap .do-pick {
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+#home-wrap .do-pick-round {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+#home-wrap .do-pick-no {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* ---- the board ------------------------------------------------------ */
+/* Two columns of six above 420px: twelve teams in one column pushes the
+   rest of the front page off the screen. */
+#home-wrap .do-board {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: grid; gap: 2px;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 420px) {
+  #home-wrap .do-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px var(--s-4);
+  }
+}
+
+#home-wrap .do-row {
+  display: flex; align-items: center; gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-1);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-body);
+  color: var(--body-text);
+}
+#home-wrap .do-slot {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: var(--bg-3);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+#home-wrap .do-team {
+  min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/*
+  THE READER'S OWN ROW. A wash of the fill rather than of --accent: the
+  text pair is a lightened or deepened colour chosen to be READ, and washing
+  it over a card gives a muddy plate. The crest's true colour at 12% is a
+  clean tint on every palette, and the slot chip carries the full gradient
+  with --on-accent over it - the one place on this card anything is filled.
+*/
+#home-wrap .do-row.is-me {
+  background: color-mix(in srgb, var(--accent-fill) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-fill) 34%, transparent);
+}
+#home-wrap .do-row.is-me .do-team {
+  color: var(--text);
+  font-weight: var(--fw-semi);
+}
+#home-wrap .do-row.is-me .do-slot {
+  background: var(--accent-sweep-135);
+  color: var(--on-accent);
+}
+#home-wrap .do-you {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+@media (max-width: 380px) {
+  #home-wrap .do-figure { font-size: var(--fs-stat-sm); }
+  #home-wrap .do-you { display: none; }
+}
+
+/* ---------------------------------------------------------------------
+   POST-DRAFT ROSTER ROOM. The order disappears when the board is full and
+   this becomes the useful seasonal replacement: the teams, their owners and
+   a direct route into the analyzer. It deliberately shares the Admin card's
+   upper-left wash without repeating a full-page gradient.
+   --------------------------------------------------------------------- */
+#home-wrap .season-field .sf-season {
+  margin-left: var(--s-2);
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+#home-wrap .sf-card {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--accent-fill) 15%, transparent) 0, transparent 34%),
+    var(--card);
+}
+#home-wrap .sf-lead {
+  display: grid;
+  grid-template-columns: minmax(145px, .65fr) minmax(220px, 1.45fr) auto;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--line-soft);
+}
+#home-wrap .sf-lead > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: end;
+  gap: 0 var(--s-2);
+}
+#home-wrap .sf-lead small {
+  grid-column: 1 / -1;
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  color: var(--muted);
+}
+#home-wrap .sf-lead strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat);
+  line-height: .9;
+  color: var(--accent);
+}
+#home-wrap .sf-lead span,
+#home-wrap .sf-lead p {
+  margin: 0;
+  color: var(--body-text);
+  font-size: var(--fs-small);
+}
+#home-wrap .sf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line-soft);
+}
+#home-wrap .sf-team {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--card);
+  color: var(--text);
+  text-decoration: none;
+}
+#home-wrap .sf-team:hover { background: var(--bg-2); }
+#home-wrap .sf-team.is-me {
+  background: color-mix(in srgb, var(--accent-fill) 11%, var(--card));
+  box-shadow: inset 3px 0 var(--accent);
+}
+#home-wrap .sf-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  color: var(--accent);
+  background: var(--bg-2);
+}
+#home-wrap .sf-team > span:nth-child(2) { min-width: 0; display: grid; }
+#home-wrap .sf-team strong,
+#home-wrap .sf-team small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#home-wrap .sf-team strong { font-size: var(--fs-body); }
+#home-wrap .sf-team small { color: var(--muted); font-size: var(--fs-micro); }
+#home-wrap .sf-team b {
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-caps);
+  color: var(--accent);
+}
+@media (max-width: 720px) {
+  #home-wrap .sf-lead { grid-template-columns: 1fr auto; }
+  #home-wrap .sf-lead > p { grid-column: 1 / -1; grid-row: 2; }
+  #home-wrap .sf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  #home-wrap .sf-lead { gap: var(--s-3); padding: var(--s-3); }
+  #home-wrap .sf-lead > p { display: none; }
+  #home-wrap .sf-grid { grid-template-columns: minmax(0, 1fr); }
+  #home-wrap .sf-team { padding: var(--s-2) var(--s-3); }
+}
+
+/* ---------------------------------------------------------------------
+   POWER PULSE. Post-draft Home becomes a living football-season read: the
+   reader's model rank, the top five and one useful roster diagnosis. It is
+   one continuous Admin-style surface, not a dashboard of nested cards.
+   --------------------------------------------------------------------- */
+#home-wrap .pp-card {
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  background:
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--accent-fill) 18%, transparent) 0, transparent 38%),
+    var(--card);
+}
+#home-wrap .pp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) 0;
+}
+#home-wrap .pp-head > div { display: flex; align-items: center; gap: var(--s-2); color: var(--accent); }
+#home-wrap .pp-head strong,
+#home-wrap .pp-loading strong,
+#home-wrap .pp-empty > strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-title-sm);
+  letter-spacing: var(--ls-caps);
+}
+#home-wrap .pp-head > span,
+#home-wrap .pp-loading span {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  color: var(--muted);
+}
+#home-wrap .pp-body {
+  display: grid;
+  grid-template-columns: minmax(120px, .72fr) minmax(230px, 1.5fr) minmax(150px, .82fr);
+  padding: var(--s-3) var(--s-4);
+}
+#home-wrap .pp-focus,
+#home-wrap .pp-record {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#home-wrap .pp-focus { padding-right: var(--s-4); border-right: 1px solid var(--line-soft); }
+#home-wrap .pp-focus small,
+#home-wrap .pp-record small {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  color: var(--muted);
+}
+#home-wrap .pp-focus > strong {
+  margin: var(--s-1) 0;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 5.3rem);
+  line-height: .9;
+  color: var(--text);
+}
+#home-wrap .pp-focus > span,
+#home-wrap .pp-record > span {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  color: var(--accent);
+}
+#home-wrap .pp-ranks {
+  margin: 0;
+  padding: 0 var(--s-4);
+  list-style: none;
+  border-right: 1px solid var(--line-soft);
+}
+#home-wrap .pp-ranks li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 31px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-sm);
+  color: var(--body-text);
+}
+#home-wrap .pp-ranks li.is-me {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent-fill) 14%, transparent);
+}
+#home-wrap .pp-ranks li > b { font-family: var(--font-display); font-size: var(--fs-title-sm); }
+#home-wrap .pp-ranks li > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--fw-semibold); }
+#home-wrap .pp-ranks li > strong { font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
+#home-wrap .pp-record { align-items: center; padding-left: var(--s-4); text-align: center; }
+#home-wrap .pp-record .ico { width: 38px; height: 38px; margin: var(--s-2) 0; color: var(--accent); }
+#home-wrap .pp-record > strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#home-wrap .pp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin: 0 var(--s-4);
+  padding: var(--s-3) 0 var(--s-4);
+  border-top: 1px solid var(--line-soft);
+}
+#home-wrap .pp-foot p { min-width: 0; display: flex; align-items: center; gap: var(--s-2); margin: 0; color: var(--body-text); }
+#home-wrap .pp-foot p .ico-sm { flex: 0 0 auto; color: var(--accent); }
+#home-wrap .pp-foot p strong { color: var(--text); }
+#home-wrap .pp-foot .btn { flex: 0 0 auto; border-color: var(--accent); color: var(--accent); }
+#home-wrap .pp-loading,
+#home-wrap .pp-empty { padding: var(--s-4); }
+#home-wrap .pp-loading > div { display: flex; justify-content: space-between; gap: var(--s-3); }
+#home-wrap .pp-loading p,
+#home-wrap .pp-empty p { margin: var(--s-2) 0 0; color: var(--muted); }
+#home-wrap .pp-loading p { animation: pp-breathe 1.5s ease-in-out infinite; }
+@keyframes pp-breathe { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { #home-wrap .pp-loading p { animation: none; } }
+
+@media (max-width: 620px) {
+  #home-wrap .pp-head { padding: var(--s-3) var(--s-3) 0; }
+  #home-wrap .pp-body {
+    grid-template-columns: 80px minmax(0, 1fr) 72px;
+    padding: var(--s-3);
+  }
+  #home-wrap .pp-focus { padding-right: var(--s-2); }
+  #home-wrap .pp-focus > strong { font-size: 3rem; }
+  #home-wrap .pp-ranks { padding: 0 var(--s-2); }
+  #home-wrap .pp-ranks li { min-height: 27px; padding: 0 var(--s-1); gap: var(--s-1); }
+  #home-wrap .pp-ranks li > b { font-size: var(--fs-body); }
+  #home-wrap .pp-ranks li > span,
+  #home-wrap .pp-ranks li > strong { font-size: var(--fs-micro); }
+  #home-wrap .pp-record {
+    padding-left: var(--s-2);
+    text-align: center;
+  }
+  #home-wrap .pp-record .ico { width: 24px; height: 24px; margin: 0; }
+  #home-wrap .pp-record > strong { font-size: var(--fs-micro); white-space: normal; }
+  #home-wrap .pp-record > span { font-size: .58rem; }
+  #home-wrap .pp-foot { margin: 0 var(--s-3); padding-bottom: var(--s-3); }
+  #home-wrap .pp-foot p { font-size: var(--fs-micro); }
+  #home-wrap .pp-foot .btn { padding-inline: var(--s-2); font-size: var(--fs-micro); }
+}
+@media (max-width: 350px) {
+  #home-wrap .pp-foot { align-items: stretch; flex-direction: column; }
+  #home-wrap .pp-foot .btn { width: 100%; justify-content: center; }
+}

@@ -1,0 +1,169 @@
+/* =====================================================================
+   weekly-outlook.css - the week view above the Team Analyzer report
+   ---------------------------------------------------------------------
+   IT SPEAKS THE REPORT'S LANGUAGE, on purpose.
+
+   This panel grew up before the analyzer was rewritten and ended up with
+   a look of its own: its own card, its own type sizes off the global
+   tokens, its own header shape. Two visual languages stacked on one page
+   is how an app starts feeling assembled from parts rather than designed,
+   so the shell here is now the same as .ta-report - same border, radius,
+   surface and shadow - the header is the same shape as .ta-report-lead,
+   and the block titles are .ta-report-title.
+
+   It also adopts the report's type scale rather than the global one, so
+   a label here and a label six inches below it are the same size.
+
+   What stays its own: the chips and the bars. Those are this panel's
+   contribution to the shared language, and the report now uses them too.
+   ===================================================================== */
+
+.wo-panel {
+  /* The report's scale, so nothing here is a different size from the same
+     thing below it. Mirrors the block at the top of team-analyzer.css. */
+  --ta-micro: 11px;
+  --ta-small: 12.5px;
+  --ta-body:  14px;
+  --ta-lead:  16px;
+
+  overflow: hidden;
+  margin: 0 0 var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg-2);
+  box-shadow: var(--shadow);
+}
+
+.wo-head {
+  position: relative;
+  display: flex; align-items: center; justify-content: flex-start;
+  gap: 14px; padding: 16px 18px;
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+}
+.wo-head:after {
+  content: ""; position: absolute; inset: auto 18px 0; height: 1px; background: var(--line);
+}
+.wo-head small {
+  color: var(--accent-2); font-size: var(--ta-micro);
+  font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+}
+.wo-head h2 { margin: 2px 0 0; font-size: 23px; letter-spacing: -.03em; }
+
+/* The number you came for. */
+.wo-verdict {
+  flex: none; text-align: left;
+  padding-left: 18px; border-left: 1px solid var(--line-soft);
+}
+.wo-verdict strong {
+  display: block; font-family: var(--font-display);
+  font-size: 30px; line-height: .9; letter-spacing: -.04em; color: var(--muted);
+}
+.wo-verdict.is-warn strong { color: var(--accent); }
+.wo-verdict.is-clean strong { font-size: 22px; color: var(--ok); }
+.wo-verdict span { display: block; margin-top: 4px; color: var(--muted); font-size: var(--ta-small); }
+
+/* Everything below the header lives in report sections. */
+.wo-alarms, .wo-clean, .wo-block, .wo-method { margin-inline: 18px; }
+.wo-alarms { list-style: none; margin: 14px 18px 0; padding: 0; display: grid; gap: 6px; }
+.wo-alarms li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: var(--r-md, 10px);
+  border: 1px solid var(--danger-line, var(--control-line));
+  background: var(--danger-bg, transparent);
+  font-size: var(--ta-small);
+}
+
+.wo-block { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--line); }
+.wo-block:first-of-type { border-top: 0; }
+.wo-block-head { display: flex; align-items: baseline; justify-content: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
+.wo-block-head h3 { margin: 0; font-size: 17px; }
+.wo-block-head small { color: var(--muted); font-size: var(--ta-small); }
+
+.wo-clean { margin: 14px 18px 0; color: var(--muted); font-size: var(--ta-small); }
+
+/* ---------------------------- the changes --------------------------- */
+
+.wo-swaps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.wo-swap {
+  display: grid; grid-template-columns: 66px 1fr; gap: 10px; align-items: center;
+  padding: var(--card-pad); border-radius: var(--card-radius);
+  border: 1px solid var(--card-line); background: var(--card-bg);
+}
+.wo-swap.is-urgent { border-color: var(--danger-line, var(--control-line)); background: var(--danger-bg, var(--bg-2)); }
+
+.wo-swap-verdict { text-align: center; }
+.wo-swap-badge {
+  display: block; font: 800 20px/1 var(--font-display); color: var(--accent);
+}
+.wo-swap.is-urgent .wo-swap-badge { color: var(--danger, var(--accent)); }
+.wo-swap-verdict small { display: block; margin-top: 4px; color: var(--muted); font-size: var(--ta-micro); text-transform: uppercase; letter-spacing: .07em; }
+
+.wo-swap-move { display: grid; gap: 8px; min-width: 0; }
+.wo-side { min-width: 0; }
+.wo-side small {
+  display: block; font: 800 var(--ta-micro)/1 var(--font-display); letter-spacing: .1em; margin-bottom: 3px;
+}
+.wo-side.is-in small { color: var(--accent); }
+.wo-side.is-out small { color: var(--muted); }
+.wo-side strong { display: block; font-size: var(--ta-body); }
+.wo-side.is-out strong { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+.wo-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 3px; color: var(--muted); font-size: var(--ta-micro); }
+
+/* --------------------------- the lineup ----------------------------- */
+
+.wo-lineup { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+/* Slots are rows in a list, not cards - one line each. */
+.wo-slot {
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) 76px 44px;
+  align-items: center; gap: 10px;
+  padding: 5px 8px; border-radius: var(--card-radius);
+}
+.wo-slot { border: 1px solid var(--card-line); background: var(--card-bg); }
+.wo-pos {
+  font: 800 var(--ta-micro)/1 var(--font-display); letter-spacing: .08em; color: var(--accent-2);
+  text-align: center; padding: 5px 0; border: 1px solid var(--control-line); border-radius: 999px;
+}
+.wo-name { min-width: 0; font-size: var(--ta-small); }
+.wo-name small { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 2px; color: var(--muted); font-size: var(--ta-micro); }
+.wo-bar { display: block; height: 7px; border-radius: 999px; background: var(--bg-3); overflow: hidden; }
+.wo-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
+.wo-pts { text-align: right; font: 700 var(--ta-lead)/1 var(--font-display); }
+
+/* ----------------------------- tags --------------------------------- */
+
+.wo-chip, .wo-tag {
+  display: inline-block; padding: 2px 7px; border-radius: 999px;
+  font: 800 var(--ta-micro)/1.5 var(--font-display); letter-spacing: .05em; white-space: nowrap;
+  border: 1px solid transparent;
+}
+/* Matchup, best to worst. Colour carries the meaning, the word repeats it. */
+.wo-chip.is-great  { color: #16a34a; border-color: color-mix(in srgb, #16a34a 45%, transparent); background: color-mix(in srgb, #16a34a 12%, transparent); }
+.wo-chip.is-good   { color: #65a30d; border-color: color-mix(in srgb, #65a30d 45%, transparent); background: color-mix(in srgb, #65a30d 12%, transparent); }
+.wo-chip.is-tough  { color: #d97706; border-color: color-mix(in srgb, #d97706 45%, transparent); background: color-mix(in srgb, #d97706 12%, transparent); }
+.wo-chip.is-brutal { color: #dc2626; border-color: color-mix(in srgb, #dc2626 45%, transparent); background: color-mix(in srgb, #dc2626 12%, transparent); }
+
+.wo-tag.is-out  { color: var(--danger, #dc2626); border-color: color-mix(in srgb, #dc2626 45%, transparent); background: color-mix(in srgb, #dc2626 12%, transparent); }
+.wo-tag.is-risk { color: #d97706; border-color: color-mix(in srgb, #d97706 45%, transparent); background: color-mix(in srgb, #d97706 12%, transparent); }
+.wo-tag.is-hot  { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.wo-tag.is-cold { color: var(--muted); border-color: var(--control-line); }
+
+.wo-method {
+  margin: 14px 0 0; padding: 11px 18px; border-top: 1px solid var(--line);
+  background: var(--bg-3); color: var(--muted); font-size: var(--ta-small); line-height: 1.6;
+}
+
+@media (max-width: 680px) {
+  .wo-head { flex-direction: column; align-items: flex-start; gap: 9px; padding: 14px; }
+  .wo-head:after { inset: auto 16px 0; }
+  .wo-verdict {
+    text-align: left; padding: 9px 0 0;
+    border-left: 0; border-top: 1px solid var(--line-soft); width: 100%;
+  }
+  .wo-verdict strong { font-size: 26px; }
+  .wo-alarms, .wo-clean, .wo-block { margin-inline: 14px; }
+  .wo-method { padding-inline: 14px; }
+  .wo-swap { grid-template-columns: 60px 1fr; }
+  /* The bar is decoration; the number is not. */
+  .wo-slot { grid-template-columns: 38px minmax(0, 1fr) 46px; }
+  .wo-bar { display: none; }
+}

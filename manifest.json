@@ -1,0 +1,43 @@
+{
+  "_comment_id": "id must resolve to exactly the same URL as start_url. 'dfl-hq' resolved to /dfl-hq (no trailing slash) while start_url is /dfl-hq/, and a mismatch can stop Chrome offering a real install.",
+  "id": "./",
+  "name": "DFL HQ",
+  "short_name": "DFL",
+  "description": "League headquarters for the DFL: rules, keepers, polls, finances, owner history and league events.",
+  "lang": "en-US",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "_comment_display": "'browser' is deliberately NOT listed here. It is not an app display mode, and listing it gains nothing while risking the app being treated as a plain tab.",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "categories": ["sports", "utilities"],
+  "_comment_icons": "app-* uses an edge-to-edge graphite field so each launcher supplies its own mask without exposing an inset frame. The maskable artwork keeps the full shield and feathers inside the adaptive safe zone.",
+  "icons": [
+    { "src": "icons/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/app-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "League Finances",
+      "short_name": "Finances",
+      "url": "./#/finances",
+      "icons": [{ "src": "icons/app-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Polls",
+      "short_name": "Polls",
+      "url": "./#/polls",
+      "icons": [{ "src": "icons/app-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "History",
+      "short_name": "History",
+      "url": "./#/history",
+      "icons": [{ "src": "icons/app-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

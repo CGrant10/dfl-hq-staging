@@ -1,0 +1,168 @@
+/* DFL HQ splash/header polish — v1.109.9
+   Pure presentation. The app still boots underneath the splash exactly as before. */
+
+/* Give the uploaded seal a little more presence without changing topbar height. */
+.brand-mark {
+  width: 36px !important;
+  height: 36px !important;
+  flex: 0 0 36px !important;
+  border-radius: 50% !important;
+  object-fit: contain;
+  background: #000;
+}
+@media (max-width: 380px) {
+  .brand-text .creed { display: none; }
+  .brand-text { line-height: 1; }
+}
+
+/* HQ full-launch gets a theatrical progress sequence. Short launches and the
+   Golf/Broadcast openings keep their existing timing and behavior. */
+#splash.is-full.is-hq.is-running {
+  animation: dfl-splash-out 220ms var(--ease) 2.72s forwards;
+}
+
+#splash.is-full.is-hq .sp-rule {
+  width: min(64vw, 330px);
+  height: 5px;
+  border: 1px solid rgba(244,242,238,.18);
+  border-radius: 999px;
+  background: rgba(244,242,238,.08);
+  overflow: hidden;
+  opacity: 0;
+  transform: none;
+}
+#splash.is-full.is-hq .sp-rule::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  /* An EVEN split, and from the palette rather than hardcoded crest hex:
+     this was #E5011B held for 45% and then blue, so a team palette never
+     reached the loading bar at all and the two colours were not even. */
+  background: var(--accent-sweep);
+  transform: scaleX(.03);
+  transform-origin: left center;
+}
+#splash.is-full.is-hq.is-running .sp-rule {
+  animation: dfl-loading-track-in 280ms var(--ease) .86s both;
+}
+#splash.is-full.is-hq.is-running .sp-rule::before {
+  animation: dfl-loading-progress 1.78s cubic-bezier(.18,.72,.22,1) .92s forwards;
+}
+
+#splash.is-full.is-hq .sp-tag {
+  min-height: 1.25em;
+  color: transparent;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+#splash.is-full.is-hq .sp-tag::before {
+  content: "LOADING PLAYERS...";
+  display: block;
+  color: #f4f2ee;
+  animation: dfl-loading-copy 1.9s steps(1,end) 1s both;
+}
+
+@keyframes dfl-loading-track-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dfl-loading-progress {
+  0%   { transform: scaleX(.03); }
+  38%  { transform: scaleX(.39); }
+  68%  { transform: scaleX(.72); }
+  88%  { transform: scaleX(.9); }
+  100% { transform: scaleX(1); }
+}
+@keyframes dfl-loading-copy {
+  0%, 31%  { content: "LOADING PLAYERS..."; color: #f4f2ee; }
+  32%, 68% { content: "LOADING SINS..."; color: #f4f2ee; }
+  69%, 100%{ content: "TIME TO FOLD!"; color: #EFC94C; }
+}
+
+/* ---------------------------------------------------------------------
+   ROUTE FEEL
+
+   The bar now gets its destination on pointerdown, so its travel should be
+   quick enough to feel attached to the thumb rather than chasing it. This
+   overrides the older 220ms shell value without changing its geometry.
+   --------------------------------------------------------------------- */
+.tabbar::before {
+  transition: left 150ms cubic-bezier(.2,.7,.2,1),
+              width 150ms cubic-bezier(.2,.7,.2,1),
+              opacity 100ms ease !important;
+}
+
+/* ui.css still draws a second, static top line on whichever tab owns `.on`.
+   The shell-level ::before above is now the sole indicator; keeping both is
+   what caused the stationary line plus the sliding line during a tap. */
+.tabbar :is(a, .tabmore).on::before {
+  display: none !important;
+}
+
+/* Route work starts immediately, and this restrained state makes that start
+   visible without blocking the render. The real page then gets the existing
+   page-in animation when it is ready. */
+.view.page-switching {
+  opacity: .82;
+  transform: translate3d(0, 4px, 0);
+  transition: opacity 90ms ease-out, transform 90ms ease-out;
+  will-change: opacity, transform;
+}
+
+/* Route modules can take a network round trip. Keep that whole interval on a
+   deliberate dark app surface so the browser's white canvas never flashes
+   through between the fixed header and navigation. */
+.view.is-route-loading {
+  min-height: calc(100dvh - 56px - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  max-width: none;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--text);
+}
+body.route-loading { background: var(--bg); }
+.view.is-route-loading .state { width: min(100%, 860px); box-sizing: border-box; }
+
+/* A slightly tighter arrival keeps the second half of the transition from
+   feeling like it is still moving after the thumb has already left the bar. */
+.page-in { animation-duration: 190ms !important; }
+.page-in > .card,
+.page-in > div > .card { animation-duration: 210ms !important; }
+.page-in > .card:nth-child(2),  .page-in > div > .card:nth-child(2)  { animation-delay: .02s !important; }
+.page-in > .card:nth-child(3),  .page-in > div > .card:nth-child(3)  { animation-delay: .04s !important; }
+.page-in > .card:nth-child(4),  .page-in > div > .card:nth-child(4)  { animation-delay: .05s !important; }
+.page-in > .card:nth-child(n+5),.page-in > div > .card:nth-child(n+5){ animation-delay: .06s !important; }
+
+/* ---------------------------------------------------------------------
+   HOME HIERARCHY - MOVED TO css/home.css
+
+   This used to hide the Upcoming and Open Polls sections with positional
+   selectors (`.creed-doors + .block + .block`) while pages/home.js went on
+   rendering them, and it hid the snapshot's fourth figure to force a
+   three-column strip. Both are gone: the duplicate sections are no longer
+   in the markup at all, and the snapshot's responsive columns are declared
+   where the rest of the page's layout lives. Positional rules like those
+   silently changed meaning every time a section was added or reordered,
+   which is exactly what they did when the Wall arrived.
+   --------------------------------------------------------------------- */
+
+/* Broadcast commissioner chrome: keep the controls full-size, but make the
+   black pill hug them instead of scaling its empty padding with a giant OBS
+   viewport. splash-loading.css is loaded last, so this intentionally wins
+   over the older vw shell spacing without touching button geometry. */
+.bc-bar {
+  gap: clamp(4px, .35vw, 8px);
+  padding: clamp(4px, .35vw, 7px) clamp(6px, .5vw, 10px);
+}
+
+/* Reduced-motion users keep the repo's existing short, static opening and
+   get no route movement either. */
+@media (prefers-reduced-motion: reduce) {
+  #splash.is-full.is-hq .sp-tag { color: #f4f2ee; }
+  #splash.is-full.is-hq .sp-tag::before { display: none; }
+  #splash.is-full.is-hq .sp-rule::before { animation: none !important; transform: scaleX(1); }
+  .view.page-switching { opacity: 1; transform: none; transition: none; }
+}

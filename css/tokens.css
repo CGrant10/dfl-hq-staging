@@ -1,0 +1,205 @@
+/* =====================================================================
+   tokens.css - the measuring system
+   ---------------------------------------------------------------------
+   Loaded BEFORE style.css on purpose. Everything in here is either a new
+   token name or a base default, so the existing stylesheet still wins on
+   anything it already decides. That is what makes the redesign migratable
+   one component family at a time instead of in one terrifying commit.
+
+   WHY THIS FILE EXISTS
+   The app had a good colour system - fifty-odd semantic variables, and
+   already careful enough to separate the crest's true red (a fill) from a
+   readable red (text). What it had no system for at all was SIZE. There
+   were 47 distinct font-size values in the codebase, including 14.5px,
+   12.5px, 11.5px, 10.5px, 9.5px and 8.5px: the fingerprint of every
+   component being eyeballed on its own. Nothing lined up with anything
+   else, so nothing established hierarchy, so a score looked like a label.
+
+   Colour is NOT redefined here. js/theme.js rewrites --bg, --text, --muted
+   and friends at runtime to personalise the app to a member's team, and
+   redefining those would either fight it or silently kill the feature.
+
+   THE TYPEFACE IS LOCAL NOW
+   Rajdhani was already the app's display face, pulled in by an @import at
+   the top of style.css - which is the slowest way a font can possibly
+   arrive: the browser must download and parse the CSS before it even
+   learns the font exists, and it blocks rendering the whole time. It is
+   two 15KB files. They live in the repo, so the app is also one fewer
+   third party and works on a phone with no signal.
+
+   Rajdhani stops at 700. Plenty of this codebase asks for 900 or 950,
+   which the browser answers by synthesising a fake bold - so display text
+   should ask for 600 or 700 and let SIZE carry the emphasis. That is the
+   right instinct for sports typography anyway.
+   ===================================================================== */
+
+@font-face {
+  font-family: "Rajdhani";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;              /* text is readable immediately, then swaps */
+  src: url("../fonts/rajdhani-600.woff2") format("woff2");
+  /* Latin only. The Google subsets for devanagari and latin-ext were another
+     40KB the DFL will never render. */
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AA, U+20B9,
+                 U+20BF, U+2070-209F, U+2113, U+2C7C, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Rajdhani";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/rajdhani-700.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AA, U+20B9,
+                 U+20BF, U+2070-209F, U+2113, U+2C7C, U+2212, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* ---- families ------------------------------------------------------ */
+  --font-display: "Rajdhani", "Segoe UI Semibold", system-ui, sans-serif;
+  /* One voice across every route and palette. The previous Fairway-only
+     override made changing colour themes also change the app's typography. */
+  --font-body: var(--font-display);
+
+  /* ---- type scale, 1.25 from a 14px body ----------------------------- */
+  /* rem, not px, so a reader who sets a larger default text size gets one. */
+  --fs-micro:  0.6875rem;   /* 11px - timestamps, the quietest metadata   */
+  --fs-label:  0.75rem;     /* 12px - column heads, badges, form labels   */
+  --fs-body:   0.875rem;    /* 14px - card copy                          */
+  --fs-h3:     1rem;        /* 16px - card titles                        */
+  --fs-h2:     1.25rem;     /* 20px - section heads                      */
+  --fs-h1:     1.5rem;      /* 24px - page titles                        */
+  --fs-display: 2rem;       /* 32px - hero headlines                     */
+
+  /* ---- the stat ramp -------------------------------------------------
+     Separate from the text scale because a score is not a heading. This is
+     what makes 127.4 outrank "Week 8 Final" without either of them being
+     bold: the number is simply four times the size. */
+  --fs-stat-sm: 1.375rem;   /* 22px - inline figures in a table row       */
+  --fs-stat:    2.25rem;    /* 36px - the figure a card is about          */
+  --fs-stat-lg: 3.25rem;    /* 52px - a matchup score                    */
+  --fs-stat-xl: 4.5rem;     /* 72px - the hero score, one per screen      */
+
+  /* ---- weights ------------------------------------------------------- */
+  --fw-body: 400;
+  --fw-med: 500;
+  --fw-semi: 600;
+  --fw-bold: 700;
+  --fw-black: 800;          /* body stack only; Rajdhani has no 800       */
+
+  /* ---- line height and tracking -------------------------------------- */
+  --lh-tight: 1.08;         /* big figures, which need no leading at all  */
+  --lh-snug: 1.3;
+  --lh-body: 1.55;
+  --ls-tight: -0.015em;     /* large display type, which sets too loose   */
+  --ls-wide: 0.04em;
+  --ls-caps: 0.1em;         /* the small-caps label look                  */
+
+  /* ---- space, a 4px grid --------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+
+  /* ---- radii --------------------------------------------------------- */
+  --r-sm: 8px;
+  --r-control: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* ---- elevation -----------------------------------------------------
+     Three levels and no more. The app is dark, so depth comes mostly from
+     surface lightness; shadow is for things that genuinely float. */
+  --e-1: 0 1px 2px rgba(0, 0, 0, .3);
+  --e-2: 0 4px 14px rgba(0, 0, 0, .35);
+  --e-3: 0 12px 34px rgba(0, 0, 0, .45);
+
+  /* ---- motion --------------------------------------------------------- */
+  --t-fast: 120ms;
+  --t-mid: 180ms;
+  --t-slow: 240ms;
+  --ease: cubic-bezier(.2, .6, .2, 1);
+}
+
+/* The body face, stated rather than inherited from whatever the browser
+   happens to default to. */
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-body);
+  letter-spacing: .01em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Native controls do not reliably inherit the body face. Keeping this here
+   prevents route-specific buttons and inputs from falling back to Arial. */
+:where(button, input, select, textarea) {
+  font-family: var(--font-display);
+}
+
+/* ---------------------------------------------------------------------
+   Utilities the new components are built from. Deliberately few: a scale
+   is only worth having if the same handful of classes is used everywhere.
+   --------------------------------------------------------------------- */
+
+/* Condensed, tight, for headlines and anything that should read as
+   broadcast rather than as prose. */
+.u-display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+}
+
+/* A figure. Tabular numerals so a column of scores lines up and so a
+   changing score does not jiggle its neighbours. */
+.u-stat {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-stat);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+}
+.u-stat-sm { font-size: var(--fs-stat-sm); }
+.u-stat-lg { font-size: var(--fs-stat-lg); }
+.u-stat-xl { font-size: var(--fs-stat-xl); }
+
+/* Any number, anywhere: stop it from dancing as it updates. */
+.u-num { font-variant-numeric: tabular-nums; }
+
+/* The quiet label above a figure or beside a row. */
+.u-label {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.u-micro { font-size: var(--fs-micro); color: var(--muted); }
+
+/* Nobody should be able to tab through this app and lose the caret. */
+:where(a, button, select, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-fast: 0ms; --t-mid: 0ms; --t-slow: 0ms; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

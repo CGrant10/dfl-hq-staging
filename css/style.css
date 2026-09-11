@@ -1,0 +1,3007 @@
+/* =====================================================================
+   DFL HQ - stylesheet
+   Dark "stadium at night" theme. Mobile first; widens on desktop.
+   All colours live in the :root block below - change them in one place.
+   ---------------------------------------------------------------------
+   WHO OWNS WHAT. Six files, loaded in this order, and each one has a job:
+
+     tokens.css     the measuring system - type scale, space, radii,
+                    motion, and the @font-face for Rajdhani. Colour is NOT
+                    here; the palette below is the palette.
+     style.css      THIS FILE. The palette, the page reset, the shell's
+                    layout, and the structural rules for screens that have
+                    no equivalent in the newer files. It loads early on
+                    purpose, so anything below can be overridden.
+     broadcast.css  the Arena broadcast view, and nothing else.
+     golf.css       golf-specific screens, and nothing else.
+     ui.css         the shared primitives - card, button, badge, stat,
+                    table, state, the shell's surface, the front page.
+     screens.css    the data screens and their presentation.
+
+   The migration rule: if a primitive's SURFACE is restated in ui.css or
+   screens.css, the copy in this file is dead and should go rather than sit
+   there looking authoritative. Several blocks have been removed on exactly
+   that basis; each one is marked with a pointer to its new home.
+   ===================================================================== */
+
+/*
+  Two weights of line, which is most of what makes the app feel calm:
+
+    --line       the edge of a thing - card borders, inputs, the tab bar
+    --line-soft  a division INSIDE a thing - between rows of a list
+
+  Using the same border for both made every list read as a stack of boxes.
+  The soft one is barely there, which is the point: it separates rows
+  without drawing a grid around them.
+*/
+/* Rajdhani is self-hosted now - see css/tokens.css, which is loaded first and
+   declares it with @font-face. The @import that used to be here fetched it
+   from Google on every cold load, and an @import is the slowest possible way
+   to arrive at a font: the browser cannot even discover it until this file has
+   been downloaded and parsed, and rendering blocks the whole time. */
+/*
+  THE COLOUR RULE - the one thing to know before editing anything below.
+
+    --accent / --accent-2            TEXT. Legible in whichever mode is on.
+    --accent-fill / --accent-2-fill  The crest's true #E5011B and #003396,
+                                     for fills, borders and gradients.
+
+  The crest red is a good fill and a poor letter - 3.9:1 on the dark page,
+  4.4:1 on the light one. So --accent is a lightened red in dark mode and a
+  darkened one in light mode, and NOTHING that has to be read uses the fill
+  pair. js/theme.js owns the switch and sets every variable below at runtime.
+
+  The values here are the dark-mode defaults, which is what paints for the
+  few milliseconds before that runs.
+*/
+:root {
+  --bg:          #0d1117;   /* page background        */
+  --bg-2:        #131a24;   /* card background        */
+  --bg-3:        #1b2432;   /* input / hover          */
+  --line:        #222b3a;   /* borders                */
+  --line-soft:   #1a222e;   /* dividers within a card */
+  --text:        #e8edf5;
+  --muted:       #8b98ab;
+  --body-text:   #cdd6e2;   /* card copy, a shade below --text */
+  --hover:       #1b2432;
+  --hover-soft:  rgba(255,255,255,.025);
+  --control-line: #616F80;  /* the edge of a tappable control */
+  /* The plate behind a floating control (broadcast pause/arrows). Defined
+     here as well as in theme.js so the very first paint - before the theme
+     is applied - is not a bare ring with nothing behind it. */
+  --control-bg:  rgba(20,27,38,.72);
+
+  /* Tells the browser what to make of the UI IT draws: select popups, date
+     and time pickers, scrollbars, autofill. theme.js overrides this per
+     mode; without it they follow the OS and go black in light mode. */
+  color-scheme: dark;
+
+  --accent:        #E67582; /* crest red, made readable  - TEXT   */
+  --accent-2:      #7098E6; /* crest blue, made readable - TEXT   */
+  --accent-fill:   #E5011B; /* the crest's own red       - FILLS  */
+  --accent-2-fill: #003396; /* the crest's own blue      - FILLS  */
+  /*
+    THE LONG-LINE GRADIENT, declared statically as well as by theme.js.
+
+    js/theme.js overwrites this on every apply(). It has to exist here too:
+    `background: var(--accent-sweep)` with the variable unset is an invalid
+    declaration, so a meter fill or a dwell timer would draw NOTHING for the
+    frames before the theme is applied - and permanently if the script ever
+    fails to run.
+  */
+  --accent-sweep:     linear-gradient(90deg,  #E5011B, #003396);
+  --accent-sweep-135: linear-gradient(135deg, #E5011B, #003396);
+  --accent-sweep-v:   linear-gradient(180deg, #E5011B, #003396);
+  --accent-dim:    #003396;
+  --on-accent:     #FFFFFF; /* text drawn on top of a fill        */
+
+  --chalk:       #f5f7fa;   /* yard-line white        */
+  --warn:        #f0a742;
+  --danger:      #e0574a;
+  --ok:          #86e6a8;
+  --ok-bg:       rgba(47,191,95,.12);
+  --ok-line:     #1d7a3d;
+  --warn-ink:    #f3c887;
+  --warn-bg:     rgba(240,167,66,.12);
+  --warn-line:   #7a5a1d;
+  --danger-ink:  #f0a79b;
+  --danger-bg:   rgba(224,87,74,.12);
+  --danger-line: #7a2f27;
+  --sc-under:    #35d06f;
+  --sc-over:     #ff766d;
+  --sc-bad:      #e33d35;
+
+  --topbar-a:    #101823;
+  --topbar-b:    #0d1117;
+  --hero-a:      #141c27;
+  --hero-wash:   rgba(255,255,255,.05);
+  --toast-bg:    #1f2937;
+  --on-toast:    #e8edf5;
+  --milestone:   #d6b254;
+
+  /* Older names, kept because the profile header and the scorecard card still
+     ask for them. They are the crest, softened. */
+  --theme-primary:   #E5011B;
+  --theme-secondary: #003396;
+  --theme-soft:      color-mix(in srgb, #E5011B 12%, transparent);
+  --theme-soft-2:    color-mix(in srgb, #003396 10%, transparent);
+  --theme-border:    color-mix(in srgb, #E5011B 34%, var(--line));
+
+  --radius:      14px;
+  --pad:         16px;
+  --shadow:      0 1px 3px rgba(0,0,0,.28);
+
+  /* THE COMMISSIONER IDENTITY CARD IS THE SURFACE STANDARD.
+     These are deliberately derived from the active palette, so the quiet
+     wash, hairline edge and restrained depth survive every theme without
+     turning the whole screen green or changing the layout. */
+  --card-surface:
+    radial-gradient(ellipse 88% 72% at 0% 0%, color-mix(in srgb, var(--accent) 13%, transparent) 0%, color-mix(in srgb, var(--accent) 6%, transparent) 34%, transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 96%, var(--accent) 4%) 0%, var(--bg-2) 58%);
+  --card-surface-hover:
+    radial-gradient(ellipse 92% 76% at 0% 0%, color-mix(in srgb, var(--accent) 17%, transparent) 0%, color-mix(in srgb, var(--accent) 8%, transparent) 36%, transparent 72%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 94%, var(--accent) 6%) 0%, var(--bg-2) 62%);
+  --card-border: color-mix(in srgb, var(--line) 82%, var(--accent) 18%);
+  --card-shadow: 0 1px 2px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+* { box-sizing: border-box; }
+
+/* ---------------------------------------------------------------------
+   Native app feel
+   * no blue flash when tapping
+   * no long-press "select text" / share callout anywhere
+   * taps register immediately instead of waiting for a double-tap zoom
+   ------------------------------------------------------------------- */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  /*
+    pan-x pan-y allows scrolling in both directions and refuses pinch and
+    double-tap zoom. `manipulation` (what was here) only killed the
+    double-tap; a two-finger pinch still zoomed the app, which is the
+    behaviour Grant reported on the pages away from Home.
+
+    THIS IS AN ACCESSIBILITY TRADE and it is deliberate: browser and OS
+    level zoom (Ctrl +, the system magnifier, the reader's default font
+    size) all still work, and the type scale is in rem so they scale the
+    app properly. What is gone is the accidental pinch.
+  */
+  touch-action: pan-x pan-y;
+  overscroll-behavior-y: none;
+}
+
+/*
+  SELECTION POLICY - ONE RULE AND ITS EXCEPTIONS, and this reverses an
+  earlier decision on purpose.
+
+  It used to hand selection BACK to the reading surfaces (.view, the More
+  sheet, dialogs) on the argument that somebody would want to copy a rule
+  or a score. Grant's call is the other way: DFL HQ is an installed app,
+  and long-pressing a score to get "Copy / Look Up / Share" is the single
+  thing that most makes it feel like a web page instead. So the whole
+  document is now non-selectable and the exceptions are the places where
+  selection is not decoration but function.
+
+  WHAT THIS COSTS, stated plainly: a member can no longer long-press to
+  copy an announcement or an address out of the calendar. If that turns
+  out to matter for one specific surface, hand it back for THAT surface
+  here - do not reintroduce the blanket .view grant.
+
+  On `html`, NOT on `*`. user-select inherits, and a `*` rule sets it
+  directly on every element - which beats inheritance, so any later rule
+  handing selection back would silently do nothing.
+*/
+html {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/*
+  THE EXCEPTIONS. You cannot type into a field you cannot put a cursor in,
+  and this is the whole list: inputs, textareas, selects, and anything
+  explicitly marked selectable. Admin forms, the golf scorecard and the
+  member picker all reach the app through these.
+*/
+input, textarea, select, [contenteditable], .u-selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/*
+  IMAGES DO NOT DRAG. A crest that peels off under a finger, or follows
+  the cursor as a ghost on a drag, reads as a document rather than an app.
+  Applied globally rather than per component, because the failure is the
+  same everywhere and there is no image in this app that benefits from
+  being dragged out.
+*/
+img, svg, .bx-art, .bx-crest {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  /* The token, not a second copy of the same stack. This file loads after
+     tokens.css and so wins here; spelling the stack out again meant the token
+     was decorative rather than the thing that actually decides. */
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  /* room for the fixed header and the bottom tab bar */
+  padding-top: calc(56px + env(safe-area-inset-top));
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+a { color: var(--accent); }
+
+/*
+  Owner and team names inside tables are links to a profile, but they are
+  content first. Styling them like ordinary web links turned every history
+  table into a wall of coloured, underlined text. These read as normal
+  text and only hint at being tappable on hover.
+*/
+.plainlink {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px dotted transparent;
+}
+.plainlink:hover { color: var(--accent); border-bottom-color: var(--accent-dim); }
+
+/* ------------------------------- header ------------------------------ */
+
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 20;
+  background: linear-gradient(180deg, var(--topbar-a), var(--topbar-b));
+  border-bottom: 1px solid var(--line);
+  padding-top: env(safe-area-inset-top);
+}
+.topbar-inner {
+  height: 56px;
+  max-width: 900px;
+  margin: 0 auto;
+  /* max() keeps content clear of the notch when a phone is in landscape */
+  padding-left:  max(var(--pad), env(safe-area-inset-left));
+  padding-right: max(var(--pad), env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+.brand-logo { width: 40px; height: 40px; display: block; flex: none; }
+.brand-text {
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  line-height: .85;
+}
+
+/*
+  "DFL HQ" CARRIES THE GRADIENT.
+
+  The stops are the TEXT pair, not the fill pair: the topbar is near-black
+  in every palette, and a raw club colour there is unreadable for about a
+  third of the league - the Raiders' #101820 on #101823 is nothing at all.
+  --accent and --accent-2 are the same hues already lifted to clear the
+  contrast bar, so the wordmark reads for every club.
+
+  The gradient is clipped through the text, with a solid colour underneath
+  for anything without background-clip support.
+*/
+.brand-word { color: var(--accent); }
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .brand-word {
+    background: linear-gradient(100deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+/* The "HQ" half no longer takes its own colour - the gradient spans the
+   whole wordmark, which is the point. */
+.brand-text .brand-word span { color: inherit; text-shadow: none; }
+
+.brand-text small {
+  display: block;
+  margin-top: 5px;
+  font-family: system-ui, sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/*
+  The logo's banner, at wordmark scale: DRAFT * GOLF * SIN * FOLD.
+
+  The bar keeps the crest's black background in both modes, so the words are
+  pinned to white here rather than following --chalk (which goes near-black in
+  light mode and would disappear into it).
+*/
+.brand-text .creed {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #f5f7fa;
+  letter-spacing: .14em;
+  font-size: 8.5px;
+}
+/*
+  THREE STARS, THREE COLOURS: primary, white, secondary.
+
+  They already alternated, but from hardcoded crest hex - so they were the
+  only thing on the bar that ignored a club palette entirely. The text pair
+  rather than the fill pair, for the same reason as the wordmark above: at
+  8px on a near-black bar the crest's own royal blue measures 1.7:1 and is
+  simply not there, and a dark club primary would be worse.
+
+  --bar-ink, NOT --accent, and that was the bug. --accent is chosen to be
+  read on the PAGE; on a light palette it is dark, and these three sit on
+  the black bar, where #B8001B measures 2.4:1. In Light and Fairway the
+  stars were simply not there. --bar-ink is the same pair chosen for the
+  bar's own ground, and on a dark palette it IS --accent - see THE BAR IS
+  ALWAYS DARK in js/theme.js. The middle star is pinned to white with the
+  words above it for the same reason they are: --chalk goes near-black.
+*/
+.brand-text .creed i {
+  font-style: normal;
+  font-size: 8px;
+  line-height: 1;
+  color: var(--bar-ink);
+}
+.brand-text .creed i:nth-of-type(2) { color: #f5f7fa; }
+.brand-text .creed i:nth-of-type(3) { color: var(--bar-ink-2); }
+
+/* On a narrow phone the stars give up their breathing room before the words
+   give up a letter. */
+@media (max-width: 380px) {
+  .brand-text .creed { gap: 3px; letter-spacing: .1em; font-size: 8px; }
+}
+
+.whoami {
+  background: var(--bg-3);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 0 1 150px;
+  min-width: 78px;
+  max-width: min(150px, 34vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.whoami:hover { background: var(--hover); }
+
+/* The controls share one deliberate cluster. Neither dynamically inserted
+   control gets to consume the profile's name space with an auto margin. */
+.topbar-actions .notification-bell,
+.topbar-actions .dfl-preview-toggle { margin-left: 0; }
+
+@media (max-width: 560px) {
+  .topbar-inner { gap: 7px; }
+  .brand-lockup { gap: 7px; }
+  .brand-text .creed { display: none; }
+  .whoami { min-width: 76px; max-width: 108px; padding-inline: 10px; font-size: 12px; }
+  .notification-bell { flex-basis: 34px; width: 34px; height: 34px; }
+}
+@media (max-width: 350px) {
+  .brand-text { display: none; }
+  .whoami { max-width: 96px; }
+}
+
+/* ------------------------------ content ------------------------------ */
+
+.view {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--pad);
+  padding-left:  max(var(--pad), env(safe-area-inset-left));
+  padding-right: max(var(--pad), env(safe-area-inset-right));
+}
+
+/* ---------------------------------------------------------------------
+   Typography scale. Three clear levels and nothing in between:
+     h1  the page you are on
+     h2  a section within it   (small, spaced, with a rule)
+     h3  the title of one card
+   ------------------------------------------------------------------- */
+
+h1 { font-size: 25px; line-height: 1.2; letter-spacing: -.02em; margin: 0 0 6px; font-weight: 800; }
+h2 { font-size: 18px; margin: 0 0 10px; font-weight: 700; }
+h3 { font-size: 15px; margin: 0 0 6px; font-weight: 700; }
+
+.muted { color: var(--muted); }
+.tiny  { font-size: 12px; }
+.center{ text-align: center; }
+.hidden{ display: none !important; }
+
+/* page header ------------------------------------------------------- */
+
+.page-head { margin: 2px 0 20px; }
+.page-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 54ch;
+}
+
+/* section title: small, uppercase, with a hairline running to the edge */
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--muted);
+}
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.section-title .count {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--text);
+}
+.section-title .section-link {
+  order: 3;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.block { margin-bottom: 4px; }
+
+/* kept for older markup */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 26px 0 12px;
+}
+.section-head h2 { margin: 0; }
+.section-head a  { font-size: 13px; }
+
+/* --------------------------------- cards ----------------------------- */
+
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 15px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+/* 2px, not 3: enough to mark the card, not enough to be a stripe */
+.card.accent { border-left: 2px solid var(--accent); }
+.card.note   { border-left: 2px solid var(--warn); }
+
+/* one card, one heading */
+.card-heading { font-size: 16px; font-weight: 700; margin: 0 0 6px; line-height: 1.3; }
+.card-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.card-cta { color: var(--accent); font-size: 13px; font-weight: 700; }
+
+a.linkcard { display: block; text-decoration: none; color: inherit; }
+a.linkcard:hover { border-color: color-mix(in srgb, var(--accent) 48%, var(--line)); background: var(--card-surface-hover); }
+
+/* Small inline icon used next to a card title. */
+.ico-sm {
+  width: 18px; height: 18px;
+  vertical-align: -3px;
+  margin-right: 4px;
+  color: var(--accent-2);
+}
+.card-title  { font-weight: 700; margin-bottom: 4px; }   /* older markup */
+.card-body   {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--body-text);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.card-meta   { color: var(--muted); font-size: 12px; margin-top: 10px; }
+
+/* .empty lives in ui.css now, with .state - see the STATES block there. Every
+   declaration this file used to make was already overridden by it. */
+
+/*
+  Flat by default: a pill is a label, not a button, so the neutral one is
+  just text at a smaller size. Only the ones carrying a status - open,
+  closed, paid, unpaid - spend a colour on it.
+*/
+.pill {
+  display: inline-block;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 1px 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pill.green, .pill.warn, .pill.red, .pill.grey {
+  padding: 2px 9px;
+  border: 1px solid var(--line);
+}
+.pill.green { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok); }
+.pill.warn  { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
+.pill.grey  { background: var(--bg-3); }
+.pill.red   { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger-ink); }
+
+/* -------------------------------- buttons ---------------------------- */
+
+.btn {
+  background: var(--accent-sweep-135);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .12s ease, filter .12s ease, background .12s ease;
+}
+/* the press itself is the feedback, now that the blue flash is gone */
+.btn:active  { transform: scale(.96); filter: brightness(.92); }
+.btn:disabled{ opacity: .5; cursor: default; }
+.btn.danger  { background: var(--danger); color: #2a0a06; }
+/* :hover, .ghost and .ghost:hover are ui.css's now - see BUTTONS there. */
+.btn.small   { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
+.btn.block   { display: block; width: 100%; }
+
+.row      { display: flex; gap: 10px; flex-wrap: wrap; }
+/* .row-end is screens.css's - same four declarations, restated on tokens. */
+
+/* quick nav grid on the home page */
+.quicknav {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 16px 0 4px;
+}
+/* One row: icon, then the word. No tagline, so the tile is only as tall as
+   it needs to be and four fit where two did. */
+.quicknav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: var(--text);
+}
+.quicknav a:hover { background: var(--bg-3); border-color: var(--accent-dim); }
+.quicknav .ico { width: 20px; height: 20px; flex: none; color: var(--accent-2); }
+.qn-label { font-size: 14.5px; font-weight: 600; }
+
+/* -------------------------------- forms ------------------------------ */
+
+label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 10px 0 4px; }
+
+input, textarea, select {
+  width: 100%;
+  background: var(--bg-3);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 16px;              /* 16px stops iOS zooming on focus */
+  font-family: inherit;
+}
+/* --accent-dim is the crest's true navy (#003396). On the near-black page
+   that is a 1.3:1 outline - a focus ring nobody can see, and it beat the
+   :focus-visible ring in tokens.css on specificity, so every field outside a
+   dialog had no visible focus at all. The readable pair, like everything
+   else that has to be seen. */
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+textarea { min-height: 96px; resize: vertical; }
+
+/* ------------------------------- tabs -------------------------------- */
+
+.tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+.tabs button {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tabs button.on { background: var(--accent-sweep-135); border-color: var(--accent); color: var(--on-accent); }
+.tabs button .tabcount {
+  display: inline-block;
+  margin-left: 5px;
+  opacity: .65;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* rules ---------------------------------------------------------------- */
+.rule-title { font-size: 15.5px; margin: 0 0 5px; }
+/* ===================== compact reading lists ========================= */
+
+/*
+  These four pages exist to be skimmed, usually to settle something in a
+  group chat. The pattern throughout: ONE card per group, rows inside it
+  divided by a hairline. A card per item spent most of its height on border
+  and padding and pushed everything else below the fold.
+*/
+
+/* ---- rules: the section as one document ---- */
+
+.rulecard { padding: 0; }
+.rulecard .rule {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.rulecard .rule:last-child { border-bottom: none; }
+.rule-title { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+.rule-text {
+  color: var(--body-text);
+  font-size: 14.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;      /* keeps typed line breaks */
+}
+
+/* ---- events and history: date or icon on the left, detail on the right ---- */
+
+.schedule { padding: 0; }
+.evrow {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.evrow:last-child { border-bottom: none; }
+/*
+  THE NEXT EVENT, and only the next one.
+
+  This rule used to land on every upcoming row, because calendar.js passed
+  the same flag to all of them - six accent rules down the left edge, none
+  of which meant anything. It marks upcoming[0] now, so the emphasis is
+  worth having: the accent rule, a slightly lifted surface, a firmer date
+  block and the small label below. Deliberately not a hero card - the point
+  of this list is that the whole season fits on one phone screen.
+*/
+.evrow.next {
+  border-left: 2px solid var(--accent);
+  padding-left: 13px;
+  background: var(--bg-3);
+}
+.evrow.next .evdate {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: var(--bg-2);
+}
+.evrow.next .evday { font-size: 20px; }
+.evrow.next .evtitle { font-weight: 800; }
+/* Small, uppercase, in the accent - the same language as .section-title, so
+   it reads as a label on the row rather than as another pill competing with
+   the "in 3 days" one beside it. */
+.ev-next-tag {
+  flex: none;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+/*
+  PAST EVENTS, HELD BACK - on the rows, not on the card, and that is the fix.
+
+  This used to be `.schedule.is-past { opacity: .78 }` and it never once took
+  effect. Every card on an entering page runs the `cardIn` keyframes with
+  fill-mode `both`, and cardIn's last frame is `opacity: 1` - an animated
+  value beats a normal declaration no matter how specific the selector is, so
+  the past schedule has always drawn at full strength. Putting it on .evrow,
+  which nothing animates, gets the de-emphasis the rule was asking for without
+  reaching for !important.
+*/
+.schedule.is-past .evrow { opacity: .74; }
+
+/* the stacked MON / 29 block */
+.evdate {
+  flex: none;
+  width: 44px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 5px 0 6px;
+  background: var(--bg-3);
+}
+.evmon {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+.evday { display: block; font-size: 18px; font-weight: 700; line-height: 1.1; }
+
+.evicon { flex: none; width: 24px; color: var(--accent-2); padding-top: 2px; }
+.evicon .ico-sm { width: 20px; height: 20px; }
+
+.evbody { flex: 1; min-width: 0; }
+.evtop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.evwhen  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.evnote {
+  font-size: 13.5px;
+  color: var(--body-text);
+  line-height: 1.45;
+  margin-top: 5px;
+  white-space: pre-wrap;
+}
+
+/* ---- keepers: three columns, one row per keeper ---- */
+
+/*
+  Resolved against "Upgrade keeper styles and layout adjustments", which
+  styled the previous block-per-team markup (.keepteam / .keeper). That
+  markup is gone, so those rules went with it - but its two interaction
+  ideas, a hover tint and a tap-scale, were good and are kept below.
+*/
+
+.keepcard { padding: 0; overflow: hidden; }
+
+/* Column widths are declared once and inherited by both the heading and
+   every row, so the four columns cannot drift apart. The two figure columns
+   are fixed, so only the two text columns give way as the screen narrows. */
+.kp-head, .kp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) 2.7rem 2.2rem;
+  gap: 10px;
+  align-items: baseline;
+  padding: 10px 16px;
+}
+.kp-head {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 12px;
+  padding-bottom: 8px;
+}
+.kp-r { text-align: right; }
+
+/* Only a row that starts a new team draws a line, which is what makes the
+   grouping readable without a header for every team. */
+.kp-row.kp-new { border-top: 1px solid var(--line-soft); }
+.kp-row { transition: background .15s ease, transform .12s ease; }
+.kp-row:hover  { background: var(--hover-soft); }
+.kp-row:active { transform: scale(.985); }
+
+.kp-team {
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kp-player { font-size: 15px; font-weight: 600; min-width: 0; }
+.kp-note {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 3px;
+}
+/*
+  A REPEATED FIGURE ALTERNATES, it does not pick a side.
+
+  There are as many .kp-cost cells as there are keepers - eleven on this
+  league's board - so whichever single colour they took, that whole page
+  came out in one hue. Making the odd rows primary and the even rows
+  secondary splits it down the middle for free, and stays split however
+  many keepers there are. Same reasoning as the ticker labels.
+*/
+.kp-cost {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.kp-row:nth-of-type(even) .kp-cost { color: var(--accent-2); }
+/* "No cost" is muted in both, and must win over the alternation. */
+.kp-cost.none,
+.kp-row:nth-of-type(even) .kp-cost.none { color: var(--muted); font-weight: 500; }
+
+/*
+  HOW LONG HE HAS BEEN HELD: the season he was first taken, and how many
+  seasons are left after this one. Two lines in one column rather than two
+  columns, because at 375px a fifth column costs more than it tells anybody.
+*/
+.kp-held {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.kp-held.none { color: var(--muted); font-size: 13px; }
+.kp-since { font-size: 13px; font-weight: 600; }
+.kp-left  { font-size: 11px; color: var(--muted); }
+.kp-left.is-final { color: var(--accent-2); font-weight: 700; }
+
+/* ==================== finance season setup =========================== */
+
+/* Season and buy-in side by side, labels above their own field. */
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+.setup-grid label { margin: 8px 0 0; }
+
+/* the three read-only numbers: teams, each, pot */
+.setup-figures {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.setup-figure { display: flex; flex-direction: column; }
+.sf-l {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* one payout: title, amount, remove */
+.po-row {
+  display: grid;
+  grid-template-columns: 1fr 6.5rem auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.po-row input { margin: 0; }
+.po-amount { text-align: right; font-variant-numeric: tabular-nums; }
+
+/*
+  The running total against the pot. Green when the payouts spend the pot
+  exactly, amber when there is money left, red when they overspend - the
+  one number that says whether the season adds up.
+*/
+.setup-tally { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.setup-tally .ok    { color: var(--accent-2); font-weight: 700; }
+.setup-tally .under { color: var(--warn-ink);   font-weight: 700; }
+.setup-tally .over  { color: var(--danger-ink); font-weight: 700; }
+
+/* a chip that is a label rather than a link */
+.chip.flat {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/*
+  A card an admin has hidden. Members never see these at all - the row is
+  filtered out in JS - so this styling only ever shows to an admin, and its
+  whole job is to say "this is not on the page for anybody else" without
+  making it unreadable.
+*/
+.is-hidden {
+  opacity: .5;
+  border-style: dashed;
+}
+.hidden-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-right: auto;    /* pushes the buttons to the right edge */
+}
+
+/* Admin-only crest controls, centred under it like the rest of the hero. */
+.crest-tools {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 4px 0 2px;
+}
+
+/* ---- the anniversary season ---- */
+
+/*
+  Only drawn on a milestone year, so it has to earn the space: a thin gold
+  rule above the crest and the words in gold small caps. Gold rather than
+  the team accent, because a tenth season is not a team colour - and it is
+  scoped to this one element so it never leaks into the theme.
+*/
+.hero.milestone {
+  border-color: #6a5320;
+  background:
+    radial-gradient(120% 90% at 50% -20%, rgba(214,178,84,.16), transparent 62%),
+    linear-gradient(180deg, #171d26, var(--bg-2));
+}
+.hero-anniversary {
+  margin: 0 auto 14px;
+  padding-bottom: 12px;
+  max-width: 22ch;
+  border-bottom: 1px solid rgba(214,178,84,.35);
+  color: var(--milestone);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+/* ---- dues: a status dot, a name, a figure ---- */
+
+.duecard { padding: 0; overflow: hidden; }
+.due-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  gap: 11px;
+  align-items: center;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/*
+  The dot carries the whole status, which is why it is first: the answer to
+  "who still owes" is a single glance down the left edge, with no sideways
+  scrolling to reach a Status column. Colours match the pills used
+  elsewhere - green paid, amber part paid, red nothing yet - and the name
+  also carries a screen-reader-only word, because colour alone is not a
+  label.
+*/
+.due-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.due-dot.green { background: var(--ok); }
+.due-dot.warn  { background: var(--warn); }
+.due-dot.red   { background: var(--danger); }
+
+.due-who { font-size: 15px; font-weight: 600; min-width: 0; }
+.due-figure {
+  font-size: 13.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.due-figure.owing { color: var(--warn-ink); font-weight: 600; }
+/* .sr-only, used above for the status word, is defined with the hero. */
+
+/* ---- the record book: what / who / number ---- */
+
+.recbook { padding: 0; overflow: hidden; }
+.rec {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 11px 16px;
+}
+.rec + .rec { border-top: 1px solid var(--line-soft); }
+.rec-who { font-size: 14.5px; font-weight: 600; min-width: 0; }
+.rec-when {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 1px;
+}
+/* The number is the point of the row, so it is the only coloured thing
+   in it and the digits are tabular so the column reads straight down. */
+.rec-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* an inline admin strip inside one of these rows spans the full width
+   rather than squeezing into a column */
+.kp-row .inline-admin,
+.evrow .inline-admin,
+.rulecard .inline-admin { grid-column: 1 / -1; width: 100%; }
+
+.tabs button { transition: background .15s ease, color .15s ease, border-color .15s ease; }
+.tabs button:active { transform: scale(.96); }
+
+/* second level of tabs, e.g. inside Admin -> Finances */
+.subtabs button { font-size: 12px; padding: 5px 11px; }
+.subtabs button.on { background: var(--bg-3); border-color: var(--accent-dim); color: var(--accent-2); }
+
+/* ------------------------------- polls ------------------------------- */
+
+.poll.is-open { border-left: 3px solid var(--accent); }
+.poll-head { margin-bottom: 12px; }
+.poll-q { font-size: 16.5px; font-weight: 700; margin: 0 0 6px; line-height: 1.35; }
+.meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.ballot { display: grid; gap: 8px; }
+.option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 11px;
+  padding: 13px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.option:hover { border-color: var(--accent); background: var(--hover); }
+
+.result-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.result-n { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* An option you can still pick. Looks like the row it replaces, so the
+   board does not reshuffle when a poll closes - it just stops responding. */
+.result-pick {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.result-pick:disabled { cursor: default; opacity: .75; }
+.result-pick:hover:not(:disabled) .result-top { color: var(--accent); }
+.result-pick:focus-visible {
+  outline: 2px solid var(--accent-dim);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* the marker on the answer you personally chose */
+.you-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-fill);
+  margin-right: 7px;
+  vertical-align: 1px;
+}
+/*
+  THE METER FILL SWEEPS, and this rule is why it did not.
+
+  screens.css already said `.bar > *` should be a primary-to-secondary
+  gradient, but `.bar > span` here is more specific, so it won and every
+  meter was solid primary. The note it carried worried that "a split inside
+  a variable-width bar would move as the percentage changed" - true of a hard
+  two-colour split, which is not what this is. A smooth gradient rescaling
+  with the fill is how every progress bar on the web behaves and does not
+  read as a glitch.
+*/
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-sweep);
+  transition: width .35s cubic-bezier(.22,.61,.36,1);
+}
+.result.mine .result-top { font-weight: 700; color: var(--accent); }
+
+/* who voted for what - everybody sees this, not just admins */
+.voters { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.voter {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.voter.is-you {
+  border-color: var(--accent-dim);
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.poll-you { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+.poll-you .linkbtn { margin-left: 4px; }
+
+.poll-admin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+/* Inside the admin footer the buttons are already in a row, so the
+   inline group must not start a second one. */
+.poll-admin .inline-admin { margin: 0; padding: 0; border: 0; }
+.admin-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--warn-ink);
+  border: 1px solid var(--warn-line);
+  background: var(--warn-bg);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+/* ========================= inline admin editing ====================== */
+
+/*
+  The buttons an admin sees beside editable content. They sit under the
+  thing they edit, separated by a dashed hairline so it reads as a control
+  strip belonging to that card rather than as part of the content.
+
+  Nothing here renders at all for a normal member - inline.js returns an
+  empty string - so a member's page keeps its original spacing exactly.
+*/
+.inline-admin {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+/* compact: no rule, no top padding - for tight spots like a table cell or
+   a row that already has its own separator */
+.inline-admin.compact {
+  margin-top: 8px;
+  padding-top: 0;
+  border-top: 0;
+  justify-content: flex-start;
+}
+
+.inline-add {
+  background: transparent;
+  color: var(--accent-2);
+  border: 1px dashed var(--accent-dim);
+}
+.inline-add:hover { background: var(--bg-3); filter: none; }
+
+/* The inline editor sheet: taller and wider than the member picker,
+   because it holds a whole form. */
+.overlay-card.wide {
+  max-width: 480px;
+  max-height: 86vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.overlay-card.wide label:first-of-type { margin-top: 4px; }
+
+/* ============================ splash / hero ========================== */
+
+.hero {
+  position: relative;
+  text-align: center;
+  padding: 18px 16px 20px;
+  margin: 0 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% -20%, var(--hero-wash), transparent 60%),
+    linear-gradient(180deg, var(--hero-a), var(--bg-2));
+}
+/*
+  HOW THE TWO TEAM COLOURS ARE USED
+  Never both on one object - no blends, no splits. Each element gets one
+  solid colour, and the two are spread across different kinds of element:
+
+    primary   (--accent)    structure and anything interactive:
+                            buttons, active tab, links, bars, avatars,
+                            card edges, the hero rule
+    secondary (--accent-2)  accolades and flourish: trophies and medals,
+                            champion callouts, the creed sign-off
+*/
+/* A 3px rule the full width of the card: a long line, so it sweeps. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--accent-sweep);
+}
+
+.hero-crest {
+  width: 132px;
+  height: auto;
+  max-width: 42vw;
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, .6));
+}
+
+/*
+  NO PLATE.
+
+  The crest used to sit on a white rounded rectangle here. The reasoning was
+  that it is line art with heavy black outlines drawn for paper, so half of it
+  would vanish on #0d1117 - and that was true of the OLD crest.
+
+  The current artwork is mostly white fill, red and blue: the mascot's shirt,
+  the DFL letters, the feathers. It reads perfectly well on a dark ground, and
+  the plate was the only thing making a transparent PNG look like it had a
+  white background. The asset itself is and always was true alpha - 67% of it
+  is zero-alpha and the ink is inset well inside the canvas.
+
+  The class is kept because home.js uses it to tell the DEFAULT crest from a
+  logo somebody has uploaded, which may well be opaque and rectangular.
+*/
+.hero-crest.is-crest {
+  background: transparent;
+  padding: 0;
+}
+/* Visible to screen readers, not on screen. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* the creed */
+.hero-creed {
+  margin: 18px auto 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.75;
+  letter-spacing: .01em;
+  color: var(--text);
+}
+.hero-mark {
+  margin: 12px auto 0;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .2em;
+  color: var(--muted);
+}
+.hero-welcome { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.hero-stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hero-stat-v { font-size: 20px; font-weight: 800; line-height: 1.1; }
+.hero-stat-l {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--muted);
+}
+.hero-stat-s {
+  font-size: 11px;
+  color: var(--accent-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.version-line { text-align: center; color: var(--muted); font-size: 12px; margin: 26px 0 4px; }
+
+/* --------------------------- owner stat grid ------------------------- */
+
+.statgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 10px 0 6px;
+}
+.stat {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.stat-v { display: block; font-size: 17px; font-weight: 700; }
+.stat-l { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.stat-v.good { color: var(--accent-2); }
+.stat-v.bad  { color: var(--danger-ink); }
+.stat-v.warn { color: var(--warn-ink); }
+
+@media (min-width: 720px) {
+  .statgrid { grid-template-columns: repeat(6, 1fr); }
+}
+
+/* a bordered block inside a card, used for each side competition */
+.subcard {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+/* ---------------------------- sync log ------------------------------- */
+
+.synclog {
+  background: #0a0f16;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 12px;
+  max-height: 220px;
+  overflow: auto;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #9fb3c8;
+  white-space: pre-wrap;
+}
+
+/* ------------------------------ tables ------------------------------- */
+
+/* Wide tables scroll inside their card instead of stretching the page. */
+.tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+.tblwrap .tbl { min-width: 560px; }
+.tbl .num { text-align: right; white-space: nowrap; }
+
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th, .tbl td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line-soft); }
+.tbl th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
+.tbl tr:last-child td { border-bottom: none; }
+
+/* ------------------------------ tab bar ------------------------------ */
+
+.tabbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  /* A token, not #10161f - css/ui.css layers the real surface on top of
+     this and both have to follow the palette or they disagree in light
+     mode for however long ui.css takes to arrive. */
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left:  env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  overflow-x: auto;
+  scrollbar-width: none;              /* the row scrolls on narrow phones */
+}
+.tabbar::-webkit-scrollbar { display: none; }
+.tabbar :is(a, .tabmore) {
+  flex: 1 0 auto;
+  min-width: 56px;
+  padding: 8px 4px 10px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+.tabbar :is(a, .tabmore) .ico { display: block; margin: 0 auto 3px; width: 22px; height: 22px; }
+.tabbar :is(a, .tabmore).on { color: var(--accent); }
+/* Icons inherit the link colour, so the active tab turns green automatically. */
+
+/* Regular season has five weekly destinations plus More. Six still fit on a
+   phone without turning the bar into a horizontal guessing game. Trade sits
+   nearest the visual center and gets a quiet resting emphasis. */
+@media (max-width: 899px) {
+  .tabbar.is-in-season { overflow-x: hidden; }
+  .tabbar.is-in-season :is(a, .tabmore) {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 2px;
+  }
+  .tabbar.is-in-season .season-lead-tab:not(.on) {
+    color: color-mix(in srgb, var(--accent) 68%, var(--muted));
+  }
+}
+
+/* ------------------------------ overlay ------------------------------ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(5,8,12,.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.overlay-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--shadow);
+}
+
+/* ------------------------------- toast ------------------------------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 50;
+  background: var(--toast-bg);
+  /*
+    ONE colour, and it is --on-toast. A second `color: var(--text)` used to
+    follow the border line and win, which is fine in dark mode where --text
+    is near-white and catastrophic in light mode where it is #11161d - the
+    same value as --toast-bg. The toast is a deliberately dark pill in both
+    modes, which is exactly why --on-toast exists; letting --text near it
+    turned every toast into a solid black lozenge with invisible writing.
+  */
+  color: var(--on-toast);
+  border: 1px solid var(--line);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  box-shadow: var(--shadow);
+  max-width: 90vw;
+}
+/* Inherits --on-toast from .toast, which is what makes this readable. */
+.toast.bad { background: #3a1714; border-color: #6b2b23; }
+
+/* ========================= motion ==================================== */
+
+/* Each page slides up as it appears, the way a native screen does. */
+@keyframes pageIn {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.page-in { animation: pageIn .24s cubic-bezier(.22, .61, .36, 1) both; }
+
+/* Cards stagger in slightly behind the page, so it reads as one motion
+   rather than everything snapping at once. */
+@keyframes cardIn {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.page-in > .card,
+.page-in > div > .card {
+  animation: cardIn .26s cubic-bezier(.22, .61, .36, 1) both;
+}
+.page-in > .card:nth-child(2),  .page-in > div > .card:nth-child(2)  { animation-delay: .03s; }
+.page-in > .card:nth-child(3),  .page-in > div > .card:nth-child(3)  { animation-delay: .06s; }
+.page-in > .card:nth-child(4),  .page-in > div > .card:nth-child(4)  { animation-delay: .09s; }
+.page-in > .card:nth-child(5),  .page-in > div > .card:nth-child(5)  { animation-delay: .12s; }
+.page-in > .card:nth-child(n+6),.page-in > div > .card:nth-child(n+6){ animation-delay: .14s; }
+
+/* event card date row */
+.event-when { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+.event-date { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+
+/* Anything tappable gets a small, quick press response. */
+.card, .option, .quicknav a, .memberbtn, .chip, .tabbar :is(a, .tabmore) {
+  transition: transform .13s ease, background .15s ease, border-color .15s ease;
+}
+.option:active, .quicknav a:active, .memberbtn:active, .chip:active { transform: scale(.975); }
+.tabbar :is(a, .tabmore):active { transform: scale(.9); }
+
+/* ---------------------------------------------------------------------
+   THE TOP BAR IS ALWAYS DARK
+
+   The bar at the top keeps the crest's black banner in light mode as well
+   as dark. It is the one piece of the app the logo genuinely dictates, and
+   it means the wordmark reads the same everywhere instead of being
+   restyled twice.
+
+   The consequence has to be handled explicitly: everything inside it is
+   pinned light-on-dark rather than following --text and --muted, which
+   invert. Without this the header goes near-black on near-black the moment
+   a phone is in light mode.
+
+   THE BOTTOM BAR NO LONGER FOLLOWS THIS RULE. It carries no wordmark, so
+   nothing about the logo dictated it, and a black slab under a white page
+   was the single most obvious thing wrong with light mode. It takes the
+   palette; its glyphs are brushed steel that has a light-mode ramp of its
+   own. See css/ui.css and css/profile-neutral.css.
+   ------------------------------------------------------------------- */
+.topbar { color: #f5f7fa; border-bottom-color: #222b3a; }
+.topbar .whoami {
+  background: rgba(255,255,255,.09);
+  color: #f5f7fa;
+  border-color: rgba(255,255,255,.2);
+}
+.topbar .whoami:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.32); }
+.brand-text span { color: #E67582; }
+.tabbar { border-top-color: var(--line); }
+.tabbar :is(a, .tabmore) { color: var(--muted); }
+.tabbar :is(a, .tabmore).on, .tabbar :is(a, .tabmore):hover { color: var(--accent); }
+
+/* ---------------------------------------------------------------------
+   Rules that used to be injected by theme.js at runtime. There is one
+   theme now, so they belong in the stylesheet like everything else.
+   Fills and gradients take the crest pair; text takes the readable pair.
+   ------------------------------------------------------------------- */
+.btn.primary, .btn.accent {
+  background: var(--accent-sweep-135);
+  color: var(--on-accent);
+  border-color: var(--accent-fill);
+}
+.tabbar :is(a, .tabmore).on:after { background: var(--accent-sweep); }
+.btn:hover, .btn.ghost:hover { border-color: var(--accent-fill); color: var(--accent); }
+input:focus, select:focus, textarea:focus { border-color: var(--accent-2-fill) !important; box-shadow: none; }
+/* The favourite-NFL-team colouring is gone - see the header comment in
+   pages/profile.js. One palette, and it is the crest. */
+.dfl-team-card { border-color: var(--theme-border); }
+
+/* ---------------------------------------------------------------------
+   THE CREED DOORS
+
+   The four words off the crest's banner, doing the job a ten-icon grid used
+   to do. They are set in the wordmark face at wordmark scale, because they
+   ARE the wordmark - the point is that the logo and the navigation are the
+   same object.
+
+   Each door owns one of the crest's colours as a top rule. No icons: the
+   words are the icons.
+   ------------------------------------------------------------------- */
+.creed-doors {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 0 0 14px;
+}
+.cdoor {
+  display: block;
+  padding: 12px 4px 11px;
+  background: var(--bg-2);
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+  border-top: 2px solid var(--accent-fill);
+}
+.cdoor:nth-child(2) { border-top-color: var(--chalk); }
+.cdoor:nth-child(3) { border-top-color: var(--accent-2-fill); }
+.cdoor:nth-child(4) { border-top-color: var(--line); }
+.cdoor:active { background: var(--hover); }
+.cd-word {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  line-height: 1;
+}
+/* The number is the reason to tap, so it gets the accent; the word is
+   identity and stays in text colour. */
+.cd-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* One quiet line where three stat blocks and a second tagline used to be. */
+.hero-line { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+
+@media (max-width: 340px) {
+  .cd-word { font-size: 15px; }
+  .cd-sub { font-size: 9px; }
+}
+
+/* ------------------------------ the More sheet ----------------------- */
+
+.tabmore {
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(5,8,12,.6);
+}
+.sheet.hidden { display: none; }
+.sheet-card {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  border-radius: 16px 16px 0 0;
+  /* Clears the fixed tab bar, and scrolls rather than hiding its last row
+     behind it if the list ever outgrows a short screen. */
+  padding: 12px 14px calc(84px + env(safe-area-inset-bottom));
+  max-height: 86vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+/* ------------------------- appearance picker ------------------------- */
+
+.modebar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 4px 0 9px;
+}
+.mode-opt {
+  min-height: 44px;
+  padding: 9px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-3);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+/* The live one is filled, not just outlined - on a three-way switch an
+   outline alone reads as "hovered" rather than "chosen". */
+.mode-opt.is-on {
+  background: var(--accent-sweep-135);
+  border-color: var(--accent-fill);
+  color: var(--on-accent);
+}
+@media (max-width: 380px) {
+  .modebar { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------------------
+   THE CLUB GRID'S STYLES WERE HERE (.team-theme/.tt-grid/.tt-club).
+
+   Removed with the grid itself: choosing the app's palette is now a
+   checkbox beside the favourite-club picker in the profile editor, so
+   thirty-two logo cells, their selection ring and their secondary-colour
+   underline have nothing left to style.
+   ------------------------------------------------------------------- */
+
+
+/* ---------------------------------------------------------------------
+   Light mode, the handful of places where flipping a variable is not
+   enough.
+   ------------------------------------------------------------------- */
+/* The crest was drawn for white, so on a light card it needs no plate. */
+/* The hero's dark wash reads as a smudge on white; flatten it. */
+:root[data-mode="light"] .hero { background: var(--bg-2); }
+:root[data-mode="light"] .hero-crest { filter: none; }
+/* A hairline is enough on white - the dark theme's shadow turns into a bruise. */
+:root[data-mode="light"] .card { box-shadow: none; }
+:root[data-mode="light"] a.linkcard:hover { background: var(--hover); }
+
+/* FAIRWAY LIGHT uses the same typography and component geometry as every
+   other palette. Changing theme changes colour, never layout or type. */
+:root[data-mode="fairway"] :is(.card, .arena-card, .duecard, .keepcard, .rulecard, .results-card, .bag-card, .gd-card) {
+  border-color: var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  box-shadow: none;
+}
+:root :is(.card-title, .card-kicker, .section-title, label, button, .btn, input, select, textarea) {
+  font-family: var(--font-display);
+  letter-spacing: .045em;
+}
+:root :is(.card-title, .card-kicker, .section-title, label) {
+  font-weight: 700;
+}
+
+/* Overlay comes up rather than blinking on. */
+@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheetIn {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+.overlay:not(.hidden)      { animation: overlayIn .18s ease both; }
+.overlay:not(.hidden) .overlay-card { animation: sheetIn .26s cubic-bezier(.22,.61,.36,1) both; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.toast:not(.hidden) { animation: toastIn .2s ease both; }
+
+/* Anyone who has asked their phone to calm down gets no animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* ====================== members and profile ========================== */
+
+.memberlist {
+  display: grid;
+  gap: 8px;
+  max-height: 52vh;
+  overflow-y: auto;
+  margin: 12px 0 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.memberbtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+}
+.memberbtn:hover { border-color: var(--accent-dim); }
+.memberbtn.on    { border-color: var(--accent); }
+.memberbtn-text  { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+
+.avatar {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+}
+/* Initials sit on the team's two colours, split down the diagonal, so
+   every avatar in the app shows the pair as two solid halves. */
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: linear-gradient(135deg,
+    var(--accent) 0 50%, var(--accent-2, var(--accent)) 50% 100%);
+  border: none;
+}
+.avatar.sm { width: 34px; height: 34px; font-size: 13px; }
+
+/* --- profile header, coloured by the member's team ------------------- */
+
+/*
+  NO overflow:hidden HERE ANY MORE. It was clipping a decorative stripe the
+  old header drew; the camera badge on the avatar deliberately hangs off the
+  picture's corner, and hidden overflow cut the outer half of it off.
+  .profile-top went with header() - the layout is .ph-top in screens.css.
+*/
+.profile-head { position: relative; padding-top: 18px; }
+.profile-name { font-size: 21px; margin: 0 0 2px; line-height: 1.2; }
+
+
+ul.tidy { margin: 6px 0 0; padding-left: 18px; }
+ul.tidy li { margin-bottom: 4px; }
+
+.chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.chip {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+}
+.chip:hover { border-color: var(--accent-dim); }
+
+.checkrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  margin: 0;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.checkrow:last-child { border-bottom: none; }
+.checkrow input { width: auto; flex: none; }
+
+/* --------------------------- password eye ---------------------------- */
+
+
+/*
+  Hides what you type without being an <input type="password">, which is
+  what makes browser password managers offer to save the commissioner
+  password and then grade it. See the comment in js/pages/admin.js.
+
+  Dropping this class is what the eye button does to reveal the text.
+*/
+input.masked {
+  -webkit-text-security: disc;
+  text-security: disc;            /* the unprefixed property, for later */
+}
+.pweye {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px; height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.pweye svg { width: 20px; height: 20px; }
+.pweye.on    { color: var(--accent); }
+
+/* ------------------------- install banner ---------------------------- */
+
+.install {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  z-index: 45;
+  width: min(560px, calc(100vw - 24px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--accent-dim);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+.install-text { flex: 1; font-size: 13px; line-height: 1.35; }
+
+/* the update bar sits above the install bar if both ever show at once */
+.install.update { bottom: calc(146px + env(safe-area-inset-bottom)); border-color: var(--accent); }
+
+/* a button that reads as a link, for the version line */
+.linkbtn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.install-x {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+/* ------------------------- wider screens ----------------------------- */
+
+@media (min-width: 560px) {
+  .quicknav { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Tablets and desktop: move the nav up under the header. A bottom tab bar
+   is a phone pattern and looks wrong on a big screen. */
+@media (min-width: 900px) {
+  body {
+    padding-top: calc(56px + 47px + env(safe-area-inset-top));
+    padding-bottom: 40px;
+  }
+  .tabbar {
+    top: calc(56px + env(safe-area-inset-top));
+    bottom: auto;
+    justify-content: center;
+    border-top: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0;
+    overflow-x: visible;
+  }
+  .tabbar :is(a, .tabmore) {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 13px 15px;
+    font-size: 13px;
+  }
+  .tabbar :is(a, .tabmore) .ico { width: 17px; height: 17px; margin: 0; }
+  .install { bottom: 24px; }
+  .toast   { bottom: 24px; }
+}
+
+/* Phone held sideways: the two fixed bars would eat most of a 375px-tall
+   screen, so slim them down. */
+@media (max-height: 480px) and (orientation: landscape) and (max-width: 899px) {
+  body { padding-top: calc(48px + env(safe-area-inset-top)); padding-bottom: 60px; }
+  .topbar-inner { height: 48px; }
+  .tabbar :is(a, .tabmore) { padding: 5px 4px 7px; font-size: 9px; }
+  .tabbar :is(a, .tabmore) .ico { width: 18px; height: 18px; }
+  .hero img { width: 110px; }
+}
+
+/* =========================== DFL ARENA =============================== */
+
+/*
+  The track is the one place in the app allowed to be theatrical, but it
+  still has to be the same app: stadium-at-night surfaces, the team accent,
+  no rainbow gradients, no bouncing cartoon chrome.
+
+  Every racer is positioned with a transform only. Nothing in the animation
+  loop touches width, left or layout, which is what keeps twelve lanes
+  smooth on a phone.
+*/
+
+.backlink { font-size: 13px; font-weight: 600; text-decoration: none; }
+
+.arena-card { padding: 0; overflow: hidden; }
+.arena-link {
+  display: block;
+  padding: 14px 16px 12px;
+  text-decoration: none;
+  color: inherit;
+}
+.arena-link:hover { background: var(--bg-3); }
+.arena-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.arena-top .card-heading { margin: 0; }
+.arena-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.arena-winner { color: var(--accent); font-weight: 700; }
+.arena-card .inline-admin { padding: 0 16px 12px; }
+
+.arena-figures { display: flex; gap: 22px; flex-wrap: wrap; }
+
+/* ------------------------------ line-up ------------------------------- */
+
+.lanes-list { display: grid; gap: 2px; }
+/*
+  Number, sprite, name, then however many admin controls there are. `auto`
+  columns rather than a fixed count, because a racer with a custom picture
+  carries one extra button (the reset) that others do not.
+*/
+.lane-row {
+  display: grid;
+  grid-template-columns: 1.6rem 46px minmax(0, 1fr) repeat(4, auto);
+  gap: 9px;
+  align-items: center;
+  padding: 7px 0;
+  border-top: 1px solid var(--line-soft);
+}
+/* An uploaded picture is boxed so a photo with a pale background still reads
+   as a racer rather than a floating smudge. */
+.lane-sprite .racer-img {
+  border-radius: 6px;
+  background: var(--hover-soft);
+}
+
+@media (max-width: 560px) {
+  /* Controls drop to their own row so the name is never crushed. */
+  .lane-row { grid-template-columns: 1.6rem 46px minmax(0, 1fr); }
+  .lane-row .lane-pick,
+  .lane-row [data-png], .lane-row [data-pngclear], .lane-row [data-drop-racer] {
+    grid-row: 2;
+  }
+  .lane-row .lane-pick { grid-column: 1 / 3; }
+}
+.lane-row:first-child { border-top: 0; }
+.lane-no {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.lane-name { font-size: 14.5px; font-weight: 600; min-width: 0; }
+.lane-pick { width: auto; font-size: 13px; padding: 6px 8px; }
+
+.lane-sprite { display: block; width: 46px; height: 30px; }
+.racer-art, .racer-img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+.arena-admin {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+.arena-admin select { width: auto; flex: 1 1 12rem; }
+
+/* ---------------------------- the scoreboard -------------------------- */
+
+.arena-track-wrap {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(180deg, #101823, var(--bg-2));
+  margin-bottom: 10px;
+}
+
+.scoreboard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: #0b1017;
+  border-bottom: 1px solid var(--line);
+}
+.sb-brand {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  color: var(--accent-2);
+}
+.sb-status {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sb-clock {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.6rem;
+  text-align: right;
+}
+
+/* ------------------------------- the track ---------------------------- */
+
+.track { position: relative; padding: 10px 0; }
+
+/* start and finish lines, drawn once and never touched again */
+.track-start, .track-finish {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 3px;
+  z-index: 1;
+}
+.track-start  { left: 0;  background: rgba(255,255,255,.14); }
+.track-finish {
+  right: 0;
+  background:
+    repeating-linear-gradient(180deg, #e8edf5 0 7px, #11161f 7px 14px);
+  box-shadow: -6px 0 14px rgba(0,0,0,.35);
+}
+
+.lane {
+  position: relative;   /* the rail positions against this */
+  height: 38px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px dashed rgba(255,255,255,.055);
+}
+.lane:last-child { border-bottom: 0; }
+
+/* the owner's name, sitting behind the racer rather than taking a column */
+.lane-tag {
+  position: absolute;
+  left: 8px;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(232,237,245,.28);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.lane-tag b {
+  display: inline-grid;
+  place-items: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--racer);
+  color: #06240f;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/*
+  The RAIL, not the sprite.
+
+  A percentage in translateX is a percentage of the element being
+  translated. So the thing that moves has to span the whole lane, with the
+  sprite parked at its left edge - otherwise "100%" is one sprite width and
+  the racers never leave the start line.
+*/
+.runner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 30px;
+  pointer-events: none;
+  /* transform only: no layout, no repaint of the lane */
+  will-change: transform;
+}
+.runner-art {
+  width: 46px;
+  height: 30px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.5));
+}
+
+/* ------------------------------ countdown ----------------------------- */
+
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(8,11,16,.72);
+  z-index: 5;
+}
+#countdown-n {
+  font-family: var(--font-display);
+  font-size: 84px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  animation: countPop .62s cubic-bezier(.2,.7,.3,1) both;
+}
+#countdown-n.go { color: var(--accent); font-size: 66px; letter-spacing: .06em; }
+
+@keyframes countPop {
+  from { opacity: 0; transform: scale(1.5); }
+  60%  { opacity: 1; transform: scale(1); }
+  to   { opacity: .92; transform: scale(1); }
+}
+
+/* ------------------------------- results ----------------------------- */
+
+.results-card { padding: 0; overflow: hidden; }
+.results-card .card-title { padding: 14px 16px 0; margin: 0; }
+
+.winner-block {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.winner-trophy { font-size: 30px; line-height: 1; }
+.winner-name {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-align: center;
+}
+.winner-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* A column header, so "12.74" is obviously a time and not a score. Matches
+   the keeper and dues tables: same three-column shape, same tabular digits. */
+.order-head {
+  display: grid;
+  /* Fixed last column, NOT auto: an auto track sizes to its own content, so
+     "TIME" and "9.76s" measured differently and the header sat half a pixel
+     off the numbers underneath it. */
+  grid-template-columns: 2.6rem 1fr 4.2rem;
+  gap: 10px;
+  padding: 10px 16px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.oh-r { text-align: right; }
+
+.order-list { padding: 0 0 4px; }
+.order-row {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr 4.2rem;
+  gap: 10px;
+  align-items: baseline;
+  padding: 9px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.order-row:first-child { border-top: 0; }
+.order-place {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.order-row.first .order-place, .order-row.first .order-name { color: var(--accent); }
+.order-name { font-size: 15px; font-weight: 600; }
+.order-time {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  /* Right-aligned under the TIME header, so the decimal points line up and
+     the column can be read on its own. */
+  text-align: right;
+}
+.results-card .row-end { padding: 0 16px 14px; }
+
+/* The order reveals a line at a time, but only when it is a live finish. */
+.results-card.reveal .order-row {
+  animation: orderIn .34s ease both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+@keyframes orderIn {
+  from { opacity: 0; transform: translate3d(-8px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Landscape and tall phones: keep twelve lanes on one screen. */
+@media (max-height: 620px) {
+  .lane { height: 30px; }
+  .runner, .lane-sprite { width: 38px; height: 25px; }
+  #countdown-n { font-size: 60px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .results-card.reveal .order-row { animation: none; }
+}
+
+/* =====================================================================
+   THE RACERS, ALIVE
+   ---------------------------------------------------------------------
+   State classes are put on .runner by the playback loop; every animation
+   below is on the ART inside it, never on .runner itself - that element
+   carries the translate3d that IS the race, and animating transform in
+   two places at once would fight the position.
+
+   Cheap on purpose: transform and opacity only, no layout, no filters.
+   A phone drawing eight lanes at 60fps should not notice these.
+   ===================================================================== */
+
+/* Waiting on the line - a slow idle so the grid is not a still photograph. */
+
+/*
+  SPECIFICITY, AND THIS IS WHY NOTHING APPEARED TO WORK.
+
+  The base and run-cycle rules used to be written as
+
+    .runner .runner-art                   (2 classes)
+    .track.is-running .runner .runner-art (4 classes)
+
+  and every state rule as
+
+    .runner.is-surge .runner-art          (3 classes)
+
+  Four beats three, so the run cycle WON over surge, stumble, jump, duel
+  and the winner's hop - permanently. The classes were being applied
+  correctly the whole time; their animations simply never got to play,
+  which is indistinguishable from "the feature does not work".
+
+  The fix is to stop over-qualifying the base rules rather than to pile
+  more classes onto the state rules: the art element only ever lives
+  inside a runner, so naming the runner in those selectors bought nothing
+  and cost the cascade. Base is now 1 class, running is 3, and each state
+  is 3 and declared later - so a state wins on source order.
+
+  If you add a state, keep it at three classes or fewer.
+*/
+.runner-art { animation: dfl-idle 2.4s var(--ease) infinite; transform-origin: 50% 90%; }
+@keyframes dfl-idle {
+  0%, 100% { transform: translateY(0) }
+  50%      { transform: translateY(-1.5px) }
+}
+
+/* Running: a quicker bob, the default while the race is on. */
+.track.is-running .runner-art { animation: dfl-run .42s linear infinite; }
+@keyframes dfl-run {
+  0%, 100% { transform: translateY(0) rotate(0deg) }
+  25%      { transform: translateY(-2px) rotate(-1.5deg) }
+  75%      { transform: translateY(-1px) rotate(1.5deg) }
+}
+
+/* A surge, a breakaway, a comeback: leaning in and moving hard. */
+.runner.is-surge .runner-art { animation: dfl-surge .22s linear infinite; }
+@keyframes dfl-surge {
+  0%, 100% { transform: translateY(-1px) scale(1.06) rotate(-2deg) }
+  50%      { transform: translateY(-3px) scale(1.08) rotate(2deg) }
+}
+
+/* A stall: a stagger, then back to it. */
+.runner.is-stumble .runner-art { animation: dfl-stumble .3s ease-in-out 4; }
+@keyframes dfl-stumble {
+  0%, 100% { transform: translateX(0) rotate(0deg) }
+  30%      { transform: translateX(-2px) rotate(-7deg) }
+  70%      { transform: translateX(1px) rotate(5deg) }
+}
+
+/* Out in front - a glow rather than a movement, so it reads without
+   competing with the surge animation. */
+.runner.is-leading .runner-art { filter: drop-shadow(0 0 6px var(--racer, var(--accent-fill))); }
+
+/* Home. Stop the legs. */
+.runner.is-home .runner-art { animation: none; }
+
+/* The winner, once the result is in. */
+.runner.is-winner .runner-art { animation: dfl-win .5s var(--ease) 3; }
+@keyframes dfl-win {
+  0%, 100% { transform: translateY(0) scale(1) }
+  40%      { transform: translateY(-7px) scale(1.12) }
+  60%      { transform: translateY(-2px) scale(1.04) }
+}
+
+/* The scoreboard line carries commentary now, so it needs room and must
+   not push the clock off a narrow phone. */
+.sb-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* =====================================================================
+   THE LIVE BOARD
+   ---------------------------------------------------------------------
+   Rows are absolutely positioned and moved with translateY, so a change
+   of position is a TRANSITION rather than a re-render. The DOM is built
+   once and never rebuilt, which is what keeps twelve racers swapping
+   places cheap on a phone: on a change it is twelve transform writes, and
+   between changes it is nothing at all.
+   ===================================================================== */
+.ar-board {
+  --row-h: 34px;
+  position: relative;
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  height: calc(var(--row-h) * var(--rows, 8));
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.ar-row {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: var(--row-h);
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 var(--s-3);
+  border-bottom: 1px solid var(--line-soft);
+  transition: transform 380ms var(--ease), background 240ms var(--ease);
+  will-change: transform;
+}
+.ar-pos {
+  font-family: var(--font-display);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  color: var(--muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ar-who {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semi);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* The racer's own colour as a left edge - the same signal the lanes use. */
+.ar-row::before {
+  content: "";
+  position: absolute; left: 0; top: 6px; bottom: 6px;
+  width: 3px; border-radius: 2px;
+  background: var(--racer, transparent);
+}
+.ar-time {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.ar-row.is-first .ar-pos { color: var(--accent); }
+.ar-row.is-home { background: var(--hover-soft); }
+.ar-row.is-home .ar-time { color: var(--text); }
+
+/* A move up flashes green-ish, a move down dims. Short, because the row
+   is also physically sliding and two loud signals at once is a mess. */
+@keyframes ar-up   { from { background: var(--ok-bg); } to { background: transparent; } }
+@keyframes ar-down { from { background: var(--danger-bg); } to { background: transparent; } }
+.ar-row.ar-up   { animation: ar-up 700ms var(--ease) 1; }
+.ar-row.ar-down { animation: ar-down 700ms var(--ease) 1; }
+
+/* =====================================================================
+   SPEED STREAKS AND FINISHES
+   Pseudo-elements on the art, so nothing new is added to the DOM while
+   the race runs - twelve racers cannot leak twelve hundred particles.
+   ===================================================================== */
+.runner-art { position: relative; }
+
+/* Two short lines behind a racer who is moving hard. Only while surging. */
+.runner.is-surge .runner-art::before,
+.runner.is-surge .runner-art::after {
+  content: "";
+  position: absolute;
+  right: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(270deg, var(--racer, var(--accent-fill)), transparent);
+  pointer-events: none;
+}
+.runner.is-surge .runner-art::before { top: 34%; width: 16px; margin-right: 3px; animation: ar-streak .28s linear infinite; }
+.runner.is-surge .runner-art::after  { top: 62%; width: 10px; margin-right: 6px; animation: ar-streak .34s linear infinite .06s; }
+@keyframes ar-streak {
+  0%   { opacity: 0; transform: translateX(4px); }
+  40%  { opacity: .85; }
+  100% { opacity: 0; transform: translateX(-6px); }
+}
+
+/* Home, and not the winner: settle rather than stop dead. */
+.runner.is-finished .runner-art { animation: ar-settle .5s var(--ease) 1 both; }
+@keyframes ar-settle {
+  0%   { transform: translateY(-3px) scale(1.05); }
+  60%  { transform: translateY(1px) scale(.98); }
+  100% { transform: none; }
+}
+
+/* The ambient counter. Deliberately the quietest line on the page - it is
+   a lava lamp, not a metric, and it renders as nothing when you are the
+   only one here. */
+.dfl-alive {
+  margin: var(--s-5) 0 calc(var(--s-2) * -1);
+  text-align: center;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-wide);
+  color: var(--muted);
+}
+.dfl-alive:empty { display: none; }
+
+/* =====================================================================
+   ARENA - amplified real events.
+   Every class below is added by the frame loop from a PRECOMPUTED queue
+   and removed by the same loop, so nothing here schedules a timer and
+   nothing can outlive the race.
+   ===================================================================== */
+
+/* A multi-position jump: lean in hard and streak. */
+.runner.is-jump .runner-art { animation: ar-jump .34s var(--ease) 3; }
+@keyframes ar-jump {
+  0%, 100% { transform: translateY(-1px) scale(1.06) }
+  50%      { transform: translateY(-4px) scale(1.12) rotate(-3deg) }
+}
+.ar-row.ar-jump { animation: ar-rowjump 700ms var(--ease) 1; }
+@keyframes ar-rowjump {
+  0%   { background: var(--accent-fill); }
+  100% { background: transparent; }
+}
+
+/* Trading places repeatedly - the pair both get busier, and `is-hot`
+   arrives once the run has been going a while. */
+.runner.is-duel .runner-art { animation: dfl-surge .2s linear infinite; }
+.runner.is-duel.is-hot .runner-art { animation-duration: .14s; }
+
+/* A near miss: a couple of sparks and a twitch. Pseudo-elements, so no
+   nodes are created no matter how close the pack gets. */
+.runner.is-near .runner-art::before {
+  content: "";
+  position: absolute; right: -4px; top: 20%;
+  width: 3px; height: 3px; border-radius: 1px;
+  background: var(--chalk);
+  animation: ar-spark .3s linear 2;
+}
+@keyframes ar-spark {
+  0%   { opacity: 0; transform: translate(0,0) }
+  40%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(5px,-4px) }
+}
+
+/*
+  THE FINAL STRETCH, as a curve rather than a switch. The loop writes a
+  band onto the track and CSS reads it, so the whole field gets busier
+  together as the leader closes in - and it is one attribute write when
+  the band changes, not sixty a second.
+*/
+.track[data-heat="1"] .runner-art { animation-duration: .38s; }
+.track[data-heat="2"] .runner-art { animation-duration: .3s; }
+.track[data-heat="3"] .runner-art { animation-duration: .24s; }
+.track[data-heat="2"] .ar-row, .track[data-heat="3"] .ar-row { transition-duration: 260ms; }
+.track[data-heat="3"] { box-shadow: inset 0 0 40px rgba(229,1,27,.10); }
+
+/* =====================================================================
+   THE RACERS, LOUDER.
+
+   The animations were all present and firing - proven by instrumenting a
+   live race - but the amplitudes were chosen by eye in a code editor
+   rather than against a 30px sprite on a phone. A 2px bob on a 30px
+   character is about half a pixel of apparent motion at arm's length,
+   which is why nothing looked alive. Every figure below is roughly
+   doubled, and the pixel-art scale is preserved by keeping the movement
+   in whole-ish pixels and short, snappy timings rather than by easing
+   smoothly like a vector character.
+   ===================================================================== */
+
+@keyframes dfl-idle {
+  0%, 100% { transform: translateY(0) }
+  50%      { transform: translateY(-3px) }
+}
+@keyframes dfl-run {
+  0%, 100% { transform: translateY(0) rotate(0deg) }
+  25%      { transform: translateY(-5px) rotate(-4deg) }
+  50%      { transform: translateY(0) rotate(0deg) }
+  75%      { transform: translateY(-3px) rotate(4deg) }
+}
+@keyframes dfl-surge {
+  0%, 100% { transform: translateY(-2px) scale(1.14) rotate(-5deg) }
+  50%      { transform: translateY(-7px) scale(1.18) rotate(5deg) }
+}
+@keyframes dfl-stumble {
+  0%, 100% { transform: translateX(0) rotate(0deg) }
+  25%      { transform: translateX(-5px) rotate(-16deg) }
+  60%      { transform: translateX(3px) rotate(11deg) }
+  80%      { transform: translateX(-2px) rotate(-5deg) }
+}
+@keyframes ar-jump {
+  0%, 100% { transform: translateY(-2px) scale(1.12) }
+  50%      { transform: translateY(-9px) scale(1.22) rotate(-7deg) }
+}
+@keyframes dfl-win {
+  0%, 100% { transform: translateY(0) scale(1) }
+  40%      { transform: translateY(-14px) scale(1.2) }
+  60%      { transform: translateY(-4px) scale(1.06) }
+}
+
+/* The streaks were 16px hairlines at 85% opacity behind a 46px sprite.
+   Longer, thicker and brighter, and they now sit on the duel and jump
+   states too - those are exactly the moments somebody is moving. */
+.runner.is-surge .runner-art::before,
+.runner.is-surge .runner-art::after,
+.runner.is-jump .runner-art::before,
+.runner.is-jump .runner-art::after,
+.runner.is-duel .runner-art::before,
+.runner.is-duel .runner-art::after {
+  content: "";
+  position: absolute;
+  right: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(270deg, var(--racer, var(--accent-fill)), transparent);
+  pointer-events: none;
+}
+.runner.is-surge .runner-art::before,
+.runner.is-jump .runner-art::before,
+.runner.is-duel .runner-art::before { top: 30%; width: 30px; margin-right: 3px; animation: ar-streak .26s linear infinite; }
+.runner.is-surge .runner-art::after,
+.runner.is-jump .runner-art::after,
+.runner.is-duel .runner-art::after  { top: 62%; width: 20px; margin-right: 6px; animation: ar-streak .32s linear infinite .06s; }
+
+/* The near-miss spark was a single 3px dot at the edge of a 46px sprite.
+   Three times the size, brighter, and it travels further. */
+.runner.is-near .runner-art::before {
+  content: "";
+  position: absolute; right: -6px; top: 25%;
+  width: 6px; height: 6px; border-radius: 1px;
+  background: var(--chalk);
+  box-shadow: 0 0 6px var(--chalk);
+  animation: ar-spark .34s linear 3;
+}
+@keyframes ar-spark {
+  0%   { opacity: 0; transform: translate(0,0) scale(.6) }
+  35%  { opacity: 1; transform: translate(4px,-4px) scale(1) }
+  100% { opacity: 0; transform: translate(11px,-9px) scale(.5) }
+}
+
+/* The leader now reads at a glance rather than needing to be looked for. */
+.runner.is-leading .runner-art {
+  filter: drop-shadow(0 0 10px var(--racer, var(--accent-fill)))
+          drop-shadow(0 2px 3px rgba(0,0,0,.5));
+}
+
+/* The debug overlay: off unless ?debug=arena. */
+.arena-debug {
+  position: absolute; top: 8px; left: 8px; z-index: 6;
+  margin: 0; padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: rgba(6,9,13,.86);
+  color: var(--chalk);
+  font: 600 10px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* =====================================================================
+   THE OPERATOR DRAWER
+   ---------------------------------------------------------------------
+   Two audiences share this page and they want opposite things:
+
+     the stream viewer   the race, big, with nothing else on it
+     the person running  a start button they can reach
+
+   On a phone the answer is not to shrink the control card - it is to get
+   it out of the way and leave a handle. The panel is already a
+   collapsible card (collapse.js), so this only changes WHERE the folded
+   version sits: pinned above the tab bar as a bar you can tap, rather
+   than a card somewhere below the race that you have to scroll to find.
+
+   Folded, it is the .dfl-fold button and nothing else - about 44px. Open,
+   it grows upward over the page, which is what a drawer should do. The
+   race itself is never covered while it is folded, and folding is exactly
+   what runRace() does the moment the countdown ends.
+
+   Desktop is untouched: there is room for the card to simply sit there.
+   ===================================================================== */
+@media (max-width: 720px) {
+  .bc-panel {
+    position: sticky;
+    /* Clear of the tab bar, and of the home indicator on an iPhone. */
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    z-index: 20;
+    margin-bottom: var(--s-3);
+    box-shadow: var(--e-3);
+    /* Open, it must not grow taller than the screen it is drawn on. */
+    max-height: 62svh;
+    overflow-y: auto;
+  }
+  /* Folded it is a bar, so it reads as a handle rather than an empty card. */
+  .bc-panel.is-folded {
+    max-height: none;
+    overflow: visible;
+    border-color: var(--accent);
+  }
+  .bc-panel.is-folded > .dfl-fold { min-height: 46px; }
+
+  /* The primary action is the one the operator is reaching for. */
+  .bc-panel .bc-controls { display: grid; gap: var(--s-2); }
+  /*
+    .btn.small sets min-height: 38px, which is under the 44px touch target
+    the rest of the app holds itself to - and it was winning here because
+    my first selector was no more specific than it. Naming the class as
+    well as the container settles it without !important.
+  */
+  .bc-panel .bc-controls > .btn,
+  .bc-panel .bc-controls > .btn.small,
+  .bc-panel .bc-controls > a.btn { width: 100%; min-height: 46px; }
+  .bc-panel .bc-controls > #bc-start { order: -1; }
+  /* The handle is the thing a thumb goes for; 39px was not enough. */
+  .bc-panel > .dfl-fold { min-height: 48px; }
+
+  /* Nothing on this page should end up underneath the drawer. */
+  #arena-wrap, .arena-page { padding-bottom: var(--s-8); }
+}
+
+
+/* Arena control polish: one calm waiting state and OBS setup out of the way. */
+.arena-ready {
+  display: grid;
+  gap: .3rem;
+  justify-items: center;
+  padding: 1.35rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  border: 1px solid var(--line, rgba(255,255,255,.14));
+  border-radius: 14px;
+  background: var(--card, rgba(255,255,255,.04));
+}
+.arena-ready span { color: var(--muted, #9aa3ad); font-size: .9rem; }
+.arena-ready.is-waiting strong::before {
+  content: "";
+  display: inline-block;
+  width: .55rem;
+  height: .55rem;
+  margin-right: .5rem;
+  border-radius: 50%;
+  background: var(--accent, #2fbf5f);
+  box-shadow: 0 0 0 .28rem color-mix(in srgb, var(--accent, #2fbf5f) 20%, transparent);
+}
+.bc-setup {
+  margin-bottom: .85rem;
+  padding: .7rem .8rem;
+  border: 1px solid var(--line, rgba(255,255,255,.14));
+  border-radius: 12px;
+}
+.bc-setup summary { cursor: pointer; font-weight: 700; }
+.bc-setup[open] summary { margin-bottom: .55rem; }
+.bc-setup p { margin: 0 0 .55rem; }
+
+/* =====================================================================
+   THE DFL BOTTOMLINE  (v1.109)
+   ---------------------------------------------------------------------
+   A scoreboard ribbon above the tab bar. It sits in the same fixed stack
+   as the nav, one z-index below it, and it pushes the page's bottom
+   padding down by its own height rather than floating over the last card -
+   which is the whole difference between a ribbon and something covering
+   the content.
+
+   --bl-h is the one number: the strip's height. body's padding-bottom and
+   every other bottom-anchored thing already measure from the nav, so they
+   pick this up by adding it once.
+   ===================================================================== */
+
+:root { --bl-h: 30px; }
+
+.bottomline {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(60px + env(safe-area-inset-bottom));
+  z-index: 19;                       /* under .tabbar (20), over the page */
+  height: var(--bl-h);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  /*
+    A TOKEN, NOT #0c1119. Unlike the top and bottom bars this is NOT
+    always-dark chrome - it is a strip of league content sitting on the
+    page, and everything written on it (--body-text, --accent) inverts with
+    the palette. Hardcoding the surface meant light mode painted near-black
+    text and a #B8001B label onto a near-black bar, and the ticker simply
+    disappeared. --bg-3 keeps it a distinct strip in both modes.
+  */
+  background: var(--bg-3);
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line);
+  padding-left:  env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  font-size: 11.5px;
+  /* The strip is decoration over content; it must never eat a tap meant for
+     the page. Only the links inside it are interactive. */
+  pointer-events: none;
+}
+.bottomline a { pointer-events: auto; }
+
+/* The page gets out of its way. */
+body.has-bottomline { padding-bottom: calc(76px + var(--bl-h) + env(safe-area-inset-bottom)); }
+body.has-bottomline .install { bottom: calc(84px + var(--bl-h) + env(safe-area-inset-bottom)); }
+body.has-bottomline .install.update { bottom: calc(146px + var(--bl-h) + env(safe-area-inset-bottom)); }
+body.has-bottomline .toast { bottom: calc(88px + var(--bl-h) + env(safe-area-inset-bottom)); }
+
+.bl-tape { display: flex; width: max-content; will-change: transform; animation: blRun var(--bl-duration, 30s) linear infinite; }
+.bl-run { display: flex; align-items: center; flex: 0 0 auto; }
+@keyframes blRun { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+/* Hovering is a desktop affordance: stop the tape so a link can be read and
+   clicked. On a phone there is no hover and nothing changes. */
+@media (hover: hover) { .bottomline:hover .bl-tape { animation-play-state: paused; } }
+
+.bl-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0 14px;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--body-text);
+}
+/*
+  TICKER LABELS ALTERNATE: primary, secondary, primary, secondary.
+
+  The parity is an attribute set by bottomline.js, not nth-of-type. A
+  .bl-item is an <a> when the entry links somewhere and a <span> when it
+  does not, so nth-of-type counted two separate sequences and produced
+  primary, primary, secondary, primary.
+*/
+.bl-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.bl-item[data-bl-alt] .bl-label { color: var(--accent-2); }
+.bl-text { font-weight: 600; }
+.bl-dot { flex: 0 0 auto; width: 3px; height: 3px; border-radius: 50%; background: var(--line); }
+
+/* REDUCED MOTION: one item at a time, swapped on a timer by bottomline.js.
+   Not a slower marquee - no marquee. */
+.bl-static { position: relative; width: 100%; height: 100%; }
+.bl-slot {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden;
+}
+.bl-slot.on { opacity: 1; visibility: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-tape { animation: none; }
+}
+
+@media (max-width: 380px) {
+  :root { --bl-h: 28px; }
+  .bl-item { padding: 0 10px; }
+  .bottomline { font-size: 11px; }
+}
+
+
+/* =====================================================================
+   TAB BAR - THE SLIDING INDICATOR  (v1.109)
+   ---------------------------------------------------------------------
+   The active tab already turned red and already drew a bar via
+   `.on:after`. What it did not do was MOVE: the bar appeared under the new
+   tab and vanished from the old one, which reads as a redraw rather than a
+   change of place.
+
+   So the bar is now ONE element, positioned by two custom properties that
+   app.js measures and sets. It transitions its left and width, so it slides
+   from tab to tab. No layout shift - it is absolutely positioned inside a
+   bar whose height it does not affect - no bounce, and no scale.
+
+   The old per-tab `:after` stays for the FIRST paint (before app.js has
+   measured anything) and is hidden the moment the indicator is live, so
+   there is never a frame with nothing selected.
+   ===================================================================== */
+
+.tabbar { position: fixed; }               /* already fixed; restated for the ::before below */
+.tabbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--tab-x, 0px);
+  width: var(--tab-w, 0px);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-sweep);
+  opacity: 0;
+  transition: left .22s cubic-bezier(.4, 0, .2, 1),
+              width .22s cubic-bezier(.4, 0, .2, 1),
+              opacity .18s ease;
+  pointer-events: none;
+}
+.tabbar.has-indicator::before { opacity: 1; }
+/* One indicator, not two: the per-tab bar hands over as soon as the measured
+   one exists. */
+.tabbar.has-indicator :is(a, .tabmore).on:after { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tabbar::before { transition: opacity .18s ease; }
+}
+
+.notification-bell { position:relative; display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; margin-left:auto; padding:0; border:1px solid var(--control-line); border-radius:999px; background:color-mix(in srgb,var(--bg-2) 84%,transparent); color:var(--muted); cursor:pointer; }
+.notification-bell:hover,.notification-bell:focus-visible { color:var(--text); border-color:var(--accent); }
+.notification-bell svg { width:21px; height:21px; }
+.notification-count { position:absolute; right:-3px; top:-4px; display:grid; place-items:center; min-width:18px; height:18px; padding:0 4px; border:2px solid var(--bg); border-radius:999px; background:var(--accent); color:var(--accent-ink,#fff); font:800 10px/1 var(--display); }
+.notification-count.hidden { display:none; }
+.notification-bell + .whoami { margin-left:0; }
+.broadcast-mode .notification-bell { display:none; }
+
+/* =====================================================================
+   TOPBAR DENSITY
+
+   The bar grew two controls - the commissioner switch and the notification
+   bell - and on a phone the thing that gave way was the member's own name,
+   squeezed to an ellipsis. Wrong casualty: the name is what tells you WHO the
+   app currently thinks you are, which is exactly what you check before acting
+   as a commissioner.
+
+   What gives way instead is the "DFL HQ" wordmark. The seal stays, so the bar
+   is still branded, and nobody needs to be told which app they have open on
+   their own phone. That is ~60px back - enough for the longest name in the
+   league next to both controls.
+
+   NOT the commissioner label: member-preview.js already shortens it to
+   "Commish" at 430px and warns, from experience, that dropping it entirely
+   leaves the view unnamed. Decoration goes before meaning.
+   ===================================================================== */
+.topbar-inner .brand-text { min-width: 0; }
+.topbar-inner .whoami { flex: 0 1 auto; min-width: 0; }
+.topbar-inner .dfl-preview-toggle { flex: 0 0 auto; }
+
+@media (max-width: 430px) {
+  .topbar-inner .brand-text { display: none; }
+  /* Now that it is not competing with the wordmark, the name holds its width
+     and truncates only when it is genuinely too long for the space. */
+  .topbar-inner .whoami { flex-shrink: 0; max-width: 48vw; }
+}

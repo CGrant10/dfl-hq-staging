@@ -1,0 +1,1104 @@
+/* =====================================================================
+   css/sportsbook.css - the board, and what makes it read as a board.
+   ---------------------------------------------------------------------
+   This file used to be three stylesheets stacked on top of each other: an
+   original pass, a "matchup-list direction" pass that undid most of it, and
+   a minified 2026 block that undid most of THAT. Every rule was fighting a
+   rule twelve lines above it, and the parts that won were mostly accidents
+   of source order. It is now one pass.
+
+   THREE THINGS DECIDE WHETHER A BETTING BOARD LOOKS EXPENSIVE
+
+     1. THE PRICE IS THE BUTTON. A book is read down its numbers, so the
+        price is the only element that gets a filled, lifted, obviously
+        tappable treatment. Everything else - team name, projection, lock
+        time - is support, and support does not compete.
+     2. NOTHING IS UNDER 11px. The previous pass set kickers and lock times
+        at 8px and 9px, which is smaller than a legal disclaimer. Small type
+        does not read as premium, it reads as a screenshot that got scaled
+        down. Labels sit on --fs-micro (11px) and earn their quietness from
+        tracking and colour instead of from size.
+     3. EVERY COLOUR COMES FROM THE PALETTE. The masthead had #090d13 and
+        #080b10aa baked in, which meant the header ignored a member's team
+        theme and went black-on-black in light mode. js/theme.js rewrites
+        --bg, --bg-2, --accent and --accent-2 at runtime, so anything drawn
+        here is a color-mix() of those and follows the theme for free.
+   ===================================================================== */
+
+#sportsbook-wrap { max-width: 1080px; margin: 0 auto; }
+#sportsbook-wrap [hidden] { display: none !important; }
+
+/* ---------------------------------------------------------------------
+   THE MASTHEAD
+   A broadcast title bar, not a page heading. The accent sweep across the
+   top edge is the crest gradient - the one piece of brand that survives
+   every palette because theme.js writes it.
+   --------------------------------------------------------------------- */
+.sb-masthead {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-4);
+  min-height: 156px;
+  margin-bottom: var(--s-4);
+  padding: var(--s-7) var(--s-6) var(--s-6);
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(ellipse 70% 90% at 88% 4%,
+      color-mix(in srgb, var(--accent-2-fill) 34%, transparent), transparent 62%),
+    radial-gradient(ellipse 60% 80% at 2% 100%,
+      color-mix(in srgb, var(--accent-fill) 12%, transparent), transparent 60%),
+    linear-gradient(168deg, color-mix(in srgb, var(--bg) 78%, var(--bg-2)) 0%, var(--bg-2) 78%);
+  box-shadow: var(--e-2), inset 0 1px 0 color-mix(in srgb, var(--text) 9%, transparent);
+}
+/* The crest gradient, 3px of it, welded to the top edge. */
+.sb-masthead::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--accent-sweep);
+}
+/* The seal as a watermark rather than as a 40px logo in the corner. It is
+   decorative, so it is a background rather than an <img> anybody can hear. */
+.sb-masthead::after {
+  content: "";
+  position: absolute;
+  right: -34px;
+  bottom: -56px;
+  width: 232px;
+  height: 232px;
+  opacity: .07;
+  background: url("../icons/dfl-seal-64.webp") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.sb-brand { position: relative; z-index: 1; min-width: 0; }
+.sb-brand > small {
+  display: block;
+  color: var(--accent);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .28em;
+  text-transform: uppercase;
+}
+.sb-brand h1 {
+  margin: var(--s-1) 0 var(--s-2);
+  font-family: var(--font-display);
+  font-size: clamp(34px, 7vw, 60px);
+  font-weight: var(--fw-bold);
+  line-height: .88;
+  letter-spacing: -.035em;
+}
+/* The board's actual scope, derived from the markets on it. When it said
+   WEEK 1 unconditionally it was decoration; now it is a caption. */
+.sb-brand > span {
+  display: inline-block;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--text) 11%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--bg) 46%, transparent);
+  color: var(--body-text);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* The bankroll is the second thing anybody looks at, so it gets the stat
+   ramp and its own plate. */
+.sb-masthead .sb-wallet {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin-left: auto;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(10px);
+  text-align: right;
+  white-space: nowrap;
+}
+.sb-masthead .sb-wallet small {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.sb-masthead .sb-wallet strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+}
+.sb-masthead .sb-wallet span {
+  margin-left: 5px;
+  color: var(--muted);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: .1em;
+}
+
+/* ---------------------------------------------------------------------
+   THE CLAIM STRIP
+   One quiet line: who is betting, what they can claim, how many lines are
+   live. The claim button is the only accent on it.
+   --------------------------------------------------------------------- */
+#sportsbook-wrap .sb-bankroll {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  min-height: 44px;
+  padding: 0 var(--s-1) var(--s-4);
+}
+#sportsbook-wrap .sb-bankroll .card-title-row { padding: 0; }
+#sportsbook-wrap .sb-bankroll .card-title {
+  font-size: var(--fs-h3);
+  letter-spacing: var(--ls-tight);
+}
+#sportsbook-wrap .sb-claim-row { margin: 0; gap: var(--s-3); }
+#sportsbook-wrap .sb-claim { min-height: 40px; font-weight: var(--fw-bold); }
+/* How many lines are live: a fact, not a call to action, so it is a hairline
+   pill rather than a second coloured thing beside the claim button. */
+#sportsbook-wrap .sb-claim-row .pill {
+  min-width: 58px;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-2) 70%, transparent);
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------
+   TRENDING PICKS
+   Aggregate activity only: the signal is useful, the bettor identities are
+   private. Three compact rows keep it subordinate to the actual board.
+   --------------------------------------------------------------------- */
+.sb-trending { margin-bottom: var(--s-5); }
+.sb-trending .sb-board-head { margin: var(--s-2) 0 var(--s-3); }
+.sb-trend-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
+.sb-trend-card {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: var(--s-2);
+  align-items: center;
+  min-width: 0;
+  padding: var(--s-3);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-md);
+  background: var(--card-surface);
+  box-shadow: var(--card-shadow);
+}
+.sb-trend-rank {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-3));
+  color: var(--accent);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+}
+.sb-trend-copy,.sb-trend-count { min-width: 0; }
+.sb-trend-copy strong,.sb-trend-copy small,.sb-trend-count b,.sb-trend-count small { display: block; }
+.sb-trend-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-body); }
+.sb-trend-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--fs-micro); }
+.sb-trend-count { grid-column: 2; padding-top: var(--s-2); border-top: 1px solid var(--line-soft); }
+.sb-trend-count b { color: var(--body-text); font-size: var(--fs-label); }
+.sb-trend-count small { color: var(--muted); font-size: var(--fs-micro); }
+.sb-trending-empty { margin: 0; padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); color: var(--muted); text-align: center; }
+
+@media (max-width: 680px) {
+  .sb-trend-grid { grid-template-columns: minmax(0, 1fr); }
+  .sb-trend-card { grid-template-columns: 28px minmax(0, 1fr) auto; }
+  .sb-trend-count { grid-column: auto; padding: 0 0 0 var(--s-3); border-top: 0; border-left: 1px solid var(--line-soft); text-align: right; }
+}
+
+/* ---------------------------------------------------------------------
+   THE TABS
+   The underline stays - it is the right pattern for two views - but the
+   active rule is the crest sweep and the count is a real badge instead of
+   a smaller run of text.
+   --------------------------------------------------------------------- */
+.sb-tabs {
+  display: flex;
+  gap: var(--s-6);
+  margin-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line);
+}
+.sb-tabs button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 48px;
+  padding: var(--s-3) 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease);
+}
+.sb-tabs button::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent-sweep);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease);
+}
+.sb-tabs button:hover { color: var(--body-text); }
+.sb-tabs button[aria-selected="true"] { color: var(--text); }
+.sb-tabs button[aria-selected="true"]::after { opacity: 1; }
+.sb-tabs button span {
+  min-width: 22px;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 32%, var(--line));
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent-2) 12%, transparent);
+  color: var(--accent-2);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------
+   THE BOARD HEAD
+   Eyebrow, title, then a hairline that runs out to the count. The rule is
+   what makes a heading read as editorial rather than as a label.
+
+   flex-end, not baseline: the title block's baseline is its EYEBROW's, so
+   aligning on it hung the rule and the count off the 11px line above the
+   heading instead of off the heading itself.
+   --------------------------------------------------------------------- */
+.sb-board-head {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-4);
+  margin: var(--s-7) 0 var(--s-4);
+}
+.sb-board-head small {
+  display: block;
+  color: var(--accent);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.sb-board-head h2 {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+}
+.sb-board-head::after {
+  content: "";
+  /* A pseudo-element generated by ::after is the flex container's LAST item,
+     so without an order swap the rule expanded to the right of the count and
+     parked it against the heading. */
+  order: 0;
+  flex: 1;
+  height: 1px;
+  margin-bottom: 9px;
+  background: linear-gradient(90deg, var(--line), transparent);
+}
+.sb-board-head > span {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.sb-board-head > span { order: 1; padding-bottom: 4px; }
+.sb-section + .sb-section { margin-top: 0; }
+
+/* ---------------------------------------------------------------------
+   THE MARKET CARD
+   --------------------------------------------------------------------- */
+.sb-market-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+#sportsbook-wrap .sb-market {
+  margin: 0;
+  padding: var(--s-4);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-lg);
+  background: var(--card-surface);
+  box-shadow: var(--card-shadow), inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+#sportsbook-wrap .sb-market::before,
+#sportsbook-wrap .sb-market::after { display: none; }
+#sportsbook-wrap .sb-market:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  background: var(--card-surface-hover);
+}
+#sportsbook-wrap .sb-market .card-title-row {
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: 0 0 var(--s-3);
+  border-bottom: 1px solid var(--line-soft);
+}
+#sportsbook-wrap .sb-market .card-heading {
+  margin: var(--s-1) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+}
+.sb-market-kicker {
+  display: block;
+  color: var(--accent);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+/* The lock time is a fact about the card, so it is a plate on the card
+   rather than free-floating 8px text. */
+.sb-locks {
+  flex: none;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--bg) 34%, transparent);
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .06em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------
+   THE OUTCOME ROW - and the price, which is the whole point
+   The row is not padded horizontally: its divider then lines up exactly
+   with the title row's divider, and the hover state is carried by a wash
+   that starts at the same left edge instead of by a box that does not.
+   --------------------------------------------------------------------- */
+#sportsbook-wrap .sb-outcomes {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding-top: var(--s-1);
+}
+#sportsbook-wrap .sb-outcome {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--s-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease);
+}
+#sportsbook-wrap .sb-outcome:last-child { border-bottom: 0; }
+#sportsbook-wrap .sb-outcome:hover,
+#sportsbook-wrap .sb-outcome:focus-visible {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent-2) 9%, transparent), transparent 78%);
+}
+
+/* The team mark. A single letter, but ringed and gradient-filled so it
+   reads as a crest slot rather than as a letter in a box. */
+.sb-team-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+  border-radius: var(--r-control);
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--accent) 14%, var(--bg-3)), var(--bg-3));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+}
+
+#sportsbook-wrap .sb-outcome-label {
+  min-width: 0;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  font-size: var(--fs-body);
+}
+.sb-outcome-name {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  letter-spacing: -.005em;
+}
+#sportsbook-wrap .sb-outcome-label small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-semi);
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* THE PRICE. Filled on hover, pressed on active, tabular always so -110
+   and +2500 occupy the same column width down the whole card. */
+#sportsbook-wrap .sb-price {
+  grid-column: 3;
+  min-width: 86px;
+  padding: 11px var(--s-2);
+  border: 1px solid color-mix(in srgb, var(--accent-2) 40%, var(--line));
+  border-radius: var(--r-control);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent-2) 13%, var(--bg-3)),
+    color-mix(in srgb, var(--accent-2) 5%, var(--bg-3)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--accent-2);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: var(--fw-bold);
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+              border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
+}
+#sportsbook-wrap .sb-outcome:hover .sb-price,
+#sportsbook-wrap .sb-outcome:focus-visible .sb-price {
+  border-color: transparent;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent-2-fill) 88%, var(--text)), var(--accent-2-fill));
+  color: var(--on-accent);
+  transform: translateY(-1px);
+  box-shadow: var(--e-2);
+}
+#sportsbook-wrap .sb-outcome:active .sb-price {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* A ticket already held, marked where the decision is made. */
+#sportsbook-wrap .sb-outcome.is-mine .sb-team-mark {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--line));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent),
+              0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.sb-held {
+  flex: none;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+/* A PICK IN THE SLIP.
+
+   Held and picked are different facts - one is money already down, the other
+   is money about to be - so they get different colours and can show at once:
+   the accent ring belongs to a ticket you hold, the filled blue price to a
+   pick you are building. */
+#sportsbook-wrap .sb-outcome.is-picked {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 82%);
+}
+#sportsbook-wrap .sb-outcome.is-picked .sb-team-mark {
+  border-color: transparent;
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--accent-2-fill) 88%, var(--text)), var(--accent-2-fill));
+  color: var(--on-accent);
+}
+#sportsbook-wrap .sb-outcome.is-picked .sb-price {
+  border-color: transparent;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent-2-fill) 88%, var(--text)), var(--accent-2-fill));
+  color: var(--on-accent);
+  box-shadow: var(--e-1);
+}
+
+/* The commissioner's settle links, which sit under the outcomes and must
+   not read as part of the board. */
+#sportsbook-wrap .sb-house {
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  letter-spacing: .04em;
+}
+
+/* ---------------------------------------------------------------------
+   TICKETS
+   A ticket is a receipt, so the stub is separated by a perforation and the
+   figures are tabular. That reads as an artifact rather than as a card.
+   --------------------------------------------------------------------- */
+#sportsbook-wrap .sb-ticket {
+  margin: 0 0 var(--s-3);
+  padding: var(--s-4);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-lg);
+  background: var(--card-surface);
+  box-shadow: var(--card-shadow), inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+}
+#sportsbook-wrap .sb-ticket .card-title-row { align-items: flex-start; padding: 0; }
+#sportsbook-wrap .sb-ticket .card-title-row strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  letter-spacing: var(--ls-tight);
+}
+#sportsbook-wrap .sb-ticket-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px dashed color-mix(in srgb, var(--text) 16%, transparent);
+}
+.sb-ticket-figures {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-5);
+  font-variant-numeric: tabular-nums;
+}
+.sb-ticket-figures b {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.sb-ticket-figures span {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+.sb-ticket-figures .sb-ticket-return { color: var(--accent-2); }
+/* Nothing came back, so the figure should not be the colour of money. */
+.sb-ticket-figures .sb-ticket-return.is-dead { color: var(--muted); }
+/* The graded state, as a chip. The base .pill is a neutral shape used all
+   over the app; on a ticket it is carrying the single most important word on
+   the card, so it gets the colour of what it says. */
+#sportsbook-wrap .sb-ticket .pill {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+#sportsbook-wrap .sb-ticket .pill.green { border-color: var(--ok-line); background: var(--ok-bg); color: var(--ok); }
+#sportsbook-wrap .sb-ticket .pill.warn { border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn-ink); }
+/* Open is the one that is still alive, so it is the one that is not grey. */
+#sportsbook-wrap .sb-ticket .pill:not(.green):not(.grey):not(.warn) {
+  border-color: color-mix(in srgb, var(--accent-2) 34%, var(--line));
+  background: color-mix(in srgb, var(--accent-2) 12%, transparent);
+  color: var(--accent-2);
+}
+.sb-ticket-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--accent);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+#sportsbook-wrap .sb-ticket-actions {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+/* Pulling a ticket takes money back off the table, so it is the one action
+   here that is allowed to look like a warning. */
+#sportsbook-wrap .sb-pull { color: var(--warn-ink); }
+
+/* A stranded ticket's explanation. Quiet, but it sits where the buttons
+   would be, because its job is to answer "why is there nothing to press". */
+.sb-ticket-stuck {
+  flex: 1 1 100%;
+  color: var(--warn-ink);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-semi);
+  line-height: 1.5;
+}
+
+/* THE RULING QUEUE. Open by default and labelled per line, because a
+   market the board no longer offers cannot be found by browsing to it. */
+#sportsbook-wrap .sb-ruling { padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+#sportsbook-wrap .sb-ruling:last-child { border-bottom: 0; }
+#sportsbook-wrap .sb-ruling strong { display: block; margin-top: 2px; font-size: var(--fs-body); line-height: var(--lh-snug); }
+.sb-ruling-why {
+  display: block;
+  color: var(--accent);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+#sportsbook-wrap .sb-ruling-bulk {
+  margin-bottom: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--warn-line);
+  border-radius: var(--r-md);
+  background: var(--warn-bg);
+}
+#sportsbook-wrap .sb-ruling-bulk p { margin: 0 0 var(--s-3); color: var(--warn-ink); font-size: var(--fs-body); line-height: var(--lh-body); }
+
+/* THE LEGS OF AN ENTRY.
+
+   Numbered, because "which one of my three broke it" is the only question
+   anybody asks a settled parlay - and once graded the number is replaced by
+   the answer. A one-pick entry draws the same list with one row rather than
+   getting a layout of its own. */
+#sportsbook-wrap .sb-ticket-legs {
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-1);
+}
+.sb-leg {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--line-soft);
+}
+.sb-leg-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg-3);
+  color: var(--muted);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+.sb-leg-pick {
+  display: block;
+  color: var(--text);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+}
+.sb-leg-body small { display: block; color: var(--muted); font-size: var(--fs-micro); }
+.sb-leg-odds {
+  color: var(--accent-2);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+.sb-leg.is-won .sb-leg-mark { border-color: var(--ok-line); background: var(--ok-bg); color: var(--ok); }
+.sb-leg.is-lost .sb-leg-mark { border-color: var(--danger-line); background: var(--danger-bg); color: var(--danger-ink); }
+.sb-leg.is-lost .sb-leg-pick,
+.sb-leg.is-lost .sb-leg-odds { color: var(--muted); }
+.sb-leg.is-void .sb-leg-pick,
+.sb-leg.is-void .sb-leg-odds { color: var(--muted); }
+
+/* ---------------------------------------------------------------------
+   EMPTY STATES AND THE QUIET TAIL
+   --------------------------------------------------------------------- */
+.sb-empty {
+  margin: 0;
+  padding: var(--s-8) var(--s-6);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-lg);
+  color: var(--muted);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-body);
+  text-align: center;
+}
+.sb-secondary {
+  margin-top: var(--s-7);
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+.sb-secondary summary {
+  min-height: 48px;
+  padding: var(--s-4) 0 0;
+  color: var(--muted);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.sb-secondary summary:hover { color: var(--text); }
+#sportsbook-wrap .sb-book summary { font-weight: var(--fw-bold); }
+
+/* ---------------------------------------------------------------------
+   THE SLIP BAR
+   The only thing on this route that floats, and it only exists while there
+   is something in it. It is what makes assembling a parlay possible at all:
+   the board has to stay visible while picks accumulate, so the running total
+   cannot be a dialog.
+
+   .has-slip on the wrap pads the bottom of the page by the bar's height, so
+   the last card on the board is still reachable underneath it.
+   --------------------------------------------------------------------- */
+#sportsbook-wrap.has-slip { padding-bottom: 132px; }
+.sb-slipbar {
+  position: fixed;
+  z-index: 40;
+  right: var(--s-3);
+  bottom: calc(var(--s-3) + env(safe-area-inset-bottom));
+  left: var(--s-3);
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  max-width: 1056px;
+  margin: 0 auto;
+  padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
+  border: 1px solid color-mix(in srgb, var(--accent-2) 30%, var(--card-border));
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--bg-2) 94%, var(--accent-2));
+  box-shadow: var(--e-3);
+  backdrop-filter: blur(12px);
+}
+.sb-slipbar-body { min-width: 0; flex: 1; }
+.sb-slipbar-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+.sb-slipbar-head strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  letter-spacing: var(--ls-tight);
+}
+.sb-slipbar-odds {
+  color: var(--accent-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+}
+.sb-slipbar-head .linkbtn { margin-left: auto; font-size: var(--fs-label); }
+/* The chips scroll rather than wrap: six picks must not make the bar tall
+   enough to eat the board it is sitting on. */
+.sb-slipbar-chips {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.sb-slipbar-chips::-webkit-scrollbar { display: none; }
+.sb-slipbar-chip {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--bg-3);
+  color: var(--body-text);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-semi);
+  white-space: nowrap;
+}
+.sb-slipbar-chip b { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+.sb-slipbar-go {
+  flex: none;
+  min-height: 48px;
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: var(--r-control);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent-2-fill) 86%, var(--text)), var(--accent-2-fill));
+  color: var(--on-accent);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+}
+
+/* ---------------------------------------------------------------------
+   THE BET SLIP
+   The one modal in the route, so it carries the same grammar as the board:
+   the price is a chip, the perforation is dashed, the return is a stat.
+   --------------------------------------------------------------------- */
+.sb-slip {
+  box-sizing: border-box;
+  width: min(480px, 100%);
+  max-height: 85dvh;
+  margin: auto auto 0;
+  padding: var(--s-6);
+  overflow: auto;
+  border: 1px solid var(--card-border);
+  border-top: 3px solid transparent;
+  border-radius: 22px 22px 0 0;
+  background:
+    linear-gradient(var(--bg-2), var(--bg-2)) padding-box,
+    var(--accent-sweep) border-box;
+  color: var(--text);
+  box-shadow: var(--e-3);
+}
+.sb-slip::backdrop { background: color-mix(in srgb, #000 62%, transparent); }
+.sb-slip-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
+.sb-slip h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+}
+.sb-slip-head button { min-width: 44px; min-height: 44px; }
+.sb-slip-market {
+  margin: var(--s-4) 0 var(--s-2);
+  color: var(--muted);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+/* Every pick on the entry, each droppable, because the slip is where you
+   change your mind about the fourth leg - not back on the board. */
+.sb-slip-picks {
+  list-style: none;
+  margin: var(--s-4) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-2);
+  max-height: 40dvh;
+  overflow-y: auto;
+}
+.sb-slip-pick {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--bg-3);
+}
+.sb-slip-index {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--accent-2) 18%, transparent);
+  color: var(--accent-2);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+.sb-slip-pick-body { min-width: 0; }
+.sb-slip-pick-body strong {
+  display: block;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+}
+.sb-slip-pick-body small { display: block; color: var(--muted); font-size: var(--fs-micro); }
+.sb-slip-pick-odds {
+  color: var(--accent-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+.sb-slip-drop {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-h3);
+  line-height: 1;
+  cursor: pointer;
+}
+.sb-slip-drop:hover { border-color: var(--danger-line); color: var(--danger-ink); }
+
+/* The combined price, on the perforation, because it is the number the whole
+   dialog exists to state. */
+.sb-slip-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-top: var(--s-4);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px dashed color-mix(in srgb, var(--text) 16%, transparent);
+}
+.sb-slip-price span {
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.sb-slip-price strong {
+  color: var(--accent-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-stat);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+}
+.sb-slip-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-5);
+  margin-top: var(--s-5);
+}
+.sb-slip-fields label,
+.sb-slip-fields > div > span {
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.sb-slip-fields label span { float: right; }
+.sb-slip-fields input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  margin-top: var(--s-2);
+  border-radius: var(--r-control);
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sb-slip-fields output {
+  display: block;
+  padding-top: 20px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+  font-variant-numeric: tabular-nums;
+}
+.sb-slip-available {
+  margin: var(--s-4) 0 0;
+  color: var(--muted);
+  font-size: var(--fs-label);
+  line-height: var(--lh-body);
+}
+#sb-slip-error { min-height: 20px; font-size: var(--fs-body); line-height: var(--lh-body); }
+.sb-slip .sb-slip-submit {
+  width: 100%;
+  min-height: 54px;
+  margin-top: var(--s-2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent-2-fill) 86%, var(--text)), var(--accent-2-fill));
+  box-shadow: var(--e-1);
+  color: var(--on-accent);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: .03em;
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.sb-slip .sb-slip-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--e-2); }
+.sb-slip .sb-slip-submit:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+.sb-slip .sb-slip-submit:disabled { opacity: .6; }
+.sb-slip button:focus-visible,
+.sb-tabs button:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 4px; }
+
+@media (min-width: 720px) {
+  .sb-slip { margin: auto; border-radius: var(--r-lg); }
+}
+
+/* ---------------------------------------------------------------------
+   PHONE
+   The masthead loses height, the board loses its second column, and the
+   price chip loses none of its size - it is the tap target.
+   --------------------------------------------------------------------- */
+@media (max-width: 720px) {
+  .sb-masthead { min-height: 132px; padding: var(--s-6) var(--s-5) var(--s-5); }
+  .sb-masthead::after { right: -50px; bottom: -70px; width: 190px; height: 190px; }
+  .sb-brand h1 { font-size: 40px; }
+  .sb-masthead .sb-wallet { padding: var(--s-2) var(--s-3); }
+  .sb-masthead .sb-wallet strong { font-size: var(--fs-stat-sm); }
+  .sb-market-grid { grid-template-columns: 1fr; }
+  .sb-board-head { margin-top: var(--s-6); }
+}
+@media (max-width: 720px) {
+  /* The bar keeps the button and loses the chip strip's second line only if
+     it has to; the picks are why the bar exists. */
+  .sb-slipbar { gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3); }
+  .sb-slipbar-go { min-height: 44px; padding: 0 var(--s-3); font-size: var(--fs-label); }
+  #sportsbook-wrap.has-slip { padding-bottom: 124px; }
+}
+@media (max-width: 420px) {
+  .sb-masthead { flex-wrap: wrap; align-items: flex-start; gap: var(--s-3); padding: var(--s-5); }
+  .sb-brand h1 { font-size: 34px; }
+  .sb-masthead .sb-wallet { margin-left: 0; text-align: left; }
+  .sb-masthead .sb-wallet small { letter-spacing: .12em; }
+  #sportsbook-wrap .sb-outcome { grid-template-columns: 32px minmax(0, 1fr) auto; gap: var(--s-2); }
+  .sb-team-mark { width: 32px; height: 32px; font-size: var(--fs-body); }
+  #sportsbook-wrap .sb-price { min-width: 76px; font-size: 17px; }
+  .sb-slip { padding: var(--s-5); }
+  .sb-slip-fields { gap: var(--s-4); }
+  .sb-slip-price strong { font-size: var(--fs-stat-sm); }
+  .sb-slipbar-odds { font-size: var(--fs-h2); }
+}

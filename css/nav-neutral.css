@@ -1,0 +1,24 @@
+/* Stable shell navigation. Ink follows the member palette so it remains
+   readable on both light and dark profile-themed navigation surfaces. */
+.tabbar :is(a,.tabmore),
+.tabbar :is(a,.tabmore):hover {
+  color:var(--muted) !important;
+  opacity:1;
+}
+.tabbar :is(a,.tabmore).on { color:var(--accent) !important; opacity:1; }
+.tabbar :is(a,.tabmore) .ico,
+.tabbar :is(a,.tabmore) svg,
+#more svg {
+  color:var(--muted) !important;
+  filter:none !important;
+  opacity:1 !important;
+  transition:filter .14s ease,transform .14s ease;
+}
+.tabbar :is(a,.tabmore).on {
+  transform:translateY(-1px);
+}
+.tabbar :is(a,.tabmore).on .ico,
+.tabbar :is(a,.tabmore).on svg {
+  color:var(--accent) !important;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 28%,transparent)) !important;
+}

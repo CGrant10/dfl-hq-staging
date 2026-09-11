@@ -1,0 +1,150 @@
+html:has(body.update-required),
+body.update-required { height: 100%; overflow: hidden; }
+body.update-required > *:not(#update):not(svg) { display: none !important; }
+body.broadcasting #update.update-gate { display: block !important; }
+
+#update.update-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  width: 100%;
+  min-height: 100dvh;
+  transform: none;
+  display: block;
+  overflow: auto;
+  color: #f7f8fb;
+  background:
+    linear-gradient(180deg, rgba(3, 5, 8, .48) 0%, rgba(4, 6, 9, .76) 43%, rgba(3, 4, 6, .97) 100%),
+    url("../assets/dfl-update-stadium.png") center / cover no-repeat;
+  border: 0;
+  border-radius: 0;
+  padding: max(34px, env(safe-area-inset-top)) 24px max(22px, env(safe-area-inset-bottom));
+  box-shadow: none;
+  isolation: isolate;
+}
+
+#update.update-gate::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 34%, rgba(208, 30, 44, .12), transparent 30%);
+}
+
+.update-gate__content {
+  width: min(100%, 430px);
+  min-height: calc(100dvh - max(56px, env(safe-area-inset-top)) - max(40px, env(safe-area-inset-bottom)));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.update-gate__eyebrow {
+  margin: 0 0 9px;
+  color: #ef3747;
+  font: 700 12px/1.1 Rajdhani, system-ui, sans-serif;
+  letter-spacing: .19em;
+}
+
+.update-gate h1 {
+  max-width: 370px;
+  margin: 0;
+  color: #fff;
+  font: 700 clamp(46px, 12.5vw, 58px)/.92 Rajdhani, system-ui, sans-serif;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.update-gate__intro {
+  max-width: 330px;
+  margin: 14px 0 18px;
+  color: rgba(239, 242, 247, .76);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.update-gate__mark {
+  width: clamp(215px, 65vw, 260px);
+  height: auto;
+  margin: 0 0 17px;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, .62));
+}
+
+.update-gate__features {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.update-gate__features > div {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 9px 12px;
+  background: rgba(11, 13, 17, .73);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.update-gate__feature-icon {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #ef3747;
+  background: rgba(222, 35, 51, .13);
+  border-radius: 9px;
+}
+
+.update-gate__feature-icon svg { width: 21px; height: 21px; }
+.update-gate__feature-icon svg * { stroke: currentColor; }
+.update-gate__features strong { color: #fff; font-size: 14px; line-height: 1.15; }
+
+.update-gate__action { width: 100%; margin-top: auto; padding-top: 18px; }
+.update-gate__button {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 11px;
+  color: #fff;
+  background: linear-gradient(180deg, #ee3345, #c70f25);
+  box-shadow: 0 10px 28px rgba(191, 13, 34, .28), inset 0 1px rgba(255, 255, 255, .2);
+  font: 700 16px/1 Rajdhani, system-ui, sans-serif;
+  letter-spacing: .08em;
+  cursor: pointer;
+}
+.update-gate__button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.update-gate__button:disabled { opacity: .68; cursor: wait; }
+.update-gate__version { margin: 10px 0 0; color: rgba(229, 232, 239, .48); font-size: 11px; letter-spacing: .04em; }
+.update-gate__status { min-height: 16px; margin: 4px 0 0; color: rgba(255,255,255,.72); font-size: 11px; }
+
+@media (min-width: 700px) {
+  #update.update-gate { padding-inline: 32px; }
+  .update-gate__content { justify-content: center; min-height: calc(100dvh - 80px); }
+  .update-gate__action { margin-top: 20px; }
+}
+
+@media (max-height: 720px) {
+  #update.update-gate { padding-top: max(22px, env(safe-area-inset-top)); }
+  .update-gate__intro { margin-block: 9px 12px; }
+  .update-gate h1 { font-size: 39px; }
+  .update-gate__mark { width: 112px; margin-bottom: 11px; }
+  .update-gate__features { gap: 6px; }
+  .update-gate__features > div { min-height: 48px; padding-block: 7px; }
+  .update-gate__action { padding-top: 12px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .update-gate__content { animation: update-gate-in .42s cubic-bezier(.2,.75,.25,1) both; }
+  .update-gate.is-updating .update-gate__button { animation: update-gate-pulse 1s ease-in-out infinite alternate; }
+}
+
+@keyframes update-gate-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes update-gate-pulse { to { filter: brightness(1.18); } }
